@@ -1,0 +1,13 @@
+#ifndef MYRSA_MATH_H
+#define MYRSA_MATH_H
+
+/**
+ * myrsa_math.h - Header file for math functions.
+ *
+ * Author: Benjamin Chin, ChatGPT.
+ */
+
+int gcd(int a, int b);
+int mod_inverse(int a, int m);
+
+#endif /* MYRSA_MATH_H */
