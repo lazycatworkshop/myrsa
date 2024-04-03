@@ -12,6 +12,7 @@ int main()
 {
 	assert(gcd(8, 12) == 4);
 	assert(mod_inverse(7, 40) == 23);
+	assert(extended_gcd(7, 40) == 23);
 
 	/* Add more tests as needed... */
 
