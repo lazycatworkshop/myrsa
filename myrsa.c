@@ -22,7 +22,6 @@ void generate_RSA_keys(int p, int q, int *publicKey, int *privateKey)
 
 	/* First compute n as the product of two primes p and q */
 	n = p * q;
-	phi = (p - 1) * (q - 1);
 
 	/* Pick an integer e which is relatively prime to (p - 1) * (q - 1) */
 	phi = (p - 1) * (q - 1);
