@@ -21,13 +21,14 @@ int gcd(int a, int b)
 	return a;
 }
 
-/*
- * mod_inverse - Calculate the modular inverse of a modulo m using brute force method
+/**
+ * mod_inverse - Calculate the modular inverse of a modulo m using brute force
+ * 	method
  * @a: The integer for which the modular inverse is to be calculated
  * @m: The modulus
  *
- * This function iterates through all possible values of x from 1 to m-1 and returns
- * the first x such that (a * x) % m == 1.
+ * This function iterates through all possible values of x from 1 to m-1 and
+ * 	returns the first x such that (a * x) % m == 1.
  *
  * Returns: The modular inverse of a modulo m, or -1 if no such inverse exists.
  */
@@ -40,13 +41,15 @@ int mod_inverse(int a, int m)
 	return -1;
 }
 
-/*
- * extended_gcd - Calculate the modular inverse of a modulo m using the Extended Euclidean Algorithm
+/**
+ * extended_gcd - Calculate the modular inverse of a modulo m using the
+ * 	Extended Euclidean Algorithm
  * @a: The integer for which the modular inverse is to be calculated
  * @m: The modulus
  *
- * This function calculates the modular inverse of a modulo m using the Extended Euclidean Algorithm.
- * It returns the modular inverse of a modulo m.
+ * This function calculates the modular inverse of a modulo m using the
+ * 	Extended Euclidean Algorithm. It returns the modular inverse of a
+ * 	modulo m.
  *
  * Returns: The modular inverse of a modulo m.
  */
