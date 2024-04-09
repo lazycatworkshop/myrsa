@@ -34,7 +34,7 @@ void generate_RSA_keys(int p, int q, int *publicKey, int *privateKey)
 	/* Anoher integer d is the multiplicative inverse of e, modulo (p - 1)
 	 * * (q - 1).
 	 * That is:
-	 * 	(e * d) % ((p - 1) * (q - 1) = 1
+	 * 	(e * d) % ((p - 1) * (q - 1)) = 1
 	 */
 	d = mod_inverse(e, phi);
 
