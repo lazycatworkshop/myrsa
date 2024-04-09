@@ -1,7 +1,7 @@
 /**
  * myrsa.c - Implementation of RSA functions.
  *
- * Author: Benjamin Chin, ChatGPT.
+ * Author: Benjamin Chin.
  */
 
 #include "myrsa_math.h"

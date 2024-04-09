@@ -4,7 +4,7 @@
 /**
  * myrsa.h - Header file for RSA key generation functions.
  *
- * Author: Benjamin Chin, ChatGPT.
+ * Author: Benjamin Chin.
  */
 void generate_RSA_keys(int p, int q, int *publicKey, int *privateKey);
 

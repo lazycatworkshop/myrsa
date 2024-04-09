@@ -1,7 +1,7 @@
 /**
  * myrsa_math.c - Implementation of math functions.
  *
- * Author: Benjamin Chin, ChatGPT.
+ * Author: Benjamin Chin.
  */
 
 /**

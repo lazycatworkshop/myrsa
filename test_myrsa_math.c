@@ -1,7 +1,7 @@
 /**
  * test_myrsa_math.c - Unit tests for myrsa_math functions.
  *
- * Author: Benjamin Chin, ChatGPT.
+ * Author: Benjamin Chin.
  */
 
 #include <assert.h>

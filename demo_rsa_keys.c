@@ -1,7 +1,7 @@
 /**
  * demo_rsa_keys.c - Implementation of RSA key generation functions.
  *
- * Author: Benjamin Chin, ChatGPT.
+ * Author: Benjamin Chin.
  */
 
 #include <stdio.h>

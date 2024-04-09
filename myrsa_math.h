@@ -4,7 +4,7 @@
 /**
  * myrsa_math.h - Header file for math functions.
  *
- * Author: Benjamin Chin, ChatGPT.
+ * Author: Benjamin Chin.
  */
 
 int gcd(int a, int b);
