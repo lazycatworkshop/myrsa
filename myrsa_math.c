@@ -8,6 +8,9 @@
  * gcd - Calculate the greatest common divisor of two integers.
  * @a: First integer.
  * @b: Second integer.
+ * 
+ * This function calculates gcd using the Euclidean algorithm.
+ * 
  * Return: The greatest common divisor.
  */
 int gcd(int a, int b)
