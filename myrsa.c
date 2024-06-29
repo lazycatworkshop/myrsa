@@ -10,11 +10,11 @@
  * generate_RSA_keys - Generate RSA public and private keys.
  * @p: First prime number.
  * @q: Second prime number.
+ * @n: Pointer to the modulus.
  * @e: Pointer to the encryption key.
  * @d: Pointer to the decryption key.
- * @n: Pointer to the modulus.
  */
-void generate_RSA_keys(int p, int q, int *e, int *d, int *n)
+void generate_RSA_keys(int p, int q, int *n, int *e, int *d)
 {
 	int phi;
 
@@ -23,10 +23,9 @@ void generate_RSA_keys(int p, int q, int *e, int *d, int *n)
 
 	/* Pick an integer e which is relatively prime to (p - 1) * (q - 1) */
 	phi = (p - 1) * (q - 1);
-	for (*e = 2; *e < phi; (*e)++) {
-		if (gcd(*e, phi) == 1) {
-			break;
-		}
+	*e = 2;
+	while (gcd(*e, phi) != 1) {
+		(*e)++;
 	}
 
 	/* Anoher integer d is the multiplicative inverse of e, modulo (p - 1)
