@@ -18,13 +18,12 @@ int main()
 #define EXPECTED_KEY2 107
 #define EXPECTED_MODULUS 187
 
-		int key1[2];
-		int key2[2];
-		generate_RSA_keys(PRIME1, PRIME2, key1, key2);
-		assert((key1[0] == EXPECTED_KEY1) &&
-		       (key1[1] == EXPECTED_MODULUS) &&
-		       (key2[0] == EXPECTED_KEY2) &&
-		       (key2[1] == EXPECTED_MODULUS));
+		int e;
+		int d;
+		int n;
+		generate_RSA_keys(PRIME1, PRIME2, &e, &d, &n);
+		assert((e == EXPECTED_KEY1) && (d == EXPECTED_KEY2) &&
+		       (n == EXPECTED_MODULUS));
 	}
 
 	/* Add more tests as needed... */

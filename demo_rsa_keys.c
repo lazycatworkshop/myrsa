@@ -13,8 +13,9 @@ int main()
 {
 	int p;
 	int q;
-	int pub_key[2];
-	int priv_key[2];
+	int e;
+	int d;
+	int n;
 
 	printf("Pick the first prime number: ");
 	scanf("%d", &p);
@@ -23,10 +24,10 @@ int main()
 
 	printf("p = %d, q = %d\n", p, q);
 
-	generate_RSA_keys(p, q, pub_key, priv_key);
+	generate_RSA_keys(p, q, &e, &d, &n);
 
-	printf("Public Key: (%d, %d)\n", pub_key[0], pub_key[1]);
-	printf("Private Key: (%d, %d)\n", priv_key[0], priv_key[1]);
+	printf("Public Key: (%d, %d)\n", e, n);
+	printf("Private Key: (%d, %d)\n", d, n);
 
 	return EXIT_SUCCESS;
 }
