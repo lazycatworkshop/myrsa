@@ -19,7 +19,8 @@
  * NOTE: Given the data type of n, make sure pick proper prime numbers
  * such that n does not overflow.
  */
-void generate_RSA_keys(int p, int q, int *n, int *e, int *d)
+void generate_RSA_keys(unsigned int p, unsigned int q, unsigned int *n,
+		       unsigned int *e, unsigned int *d)
 {
 	/* First compute n as the product of two primes p and q */
 	*n = p * q;

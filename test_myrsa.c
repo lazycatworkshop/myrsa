@@ -9,20 +9,21 @@
 #include "myrsa.h"
 
 /* Prototype of the function to be tested */
-void generate_RSA_keys(int p, int q, int *n, int *e, int *d);
+void generate_RSA_keys(unsigned int p, unsigned int q, unsigned int *n,
+		       unsigned int *e, unsigned int *d);
 
 // Struct to hold test cases
 typedef struct {
-	int prime1;
-	int prime2;
-	int expected_n;
-	int expected_e;
-	int expected_d;
+	unsigned int prime1;
+	unsigned int prime2;
+	unsigned int expected_n;
+	unsigned int expected_e;
+	unsigned int expected_d;
 } rsa_key_test_case;
 
 void run_test_case(rsa_key_test_case test)
 {
-	int n, e, d;
+	unsigned int n, e, d;
 	generate_RSA_keys(test.prime1, test.prime2, &n, &e, &d);
 	assert(e == test.expected_e);
 	assert(d == test.expected_d);

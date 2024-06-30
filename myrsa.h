@@ -6,6 +6,7 @@
  *
  * Author: Benjamin Chin.
  */
-void generate_RSA_keys(int p, int q, int *n, int *e, int *d);
+void generate_RSA_keys(unsigned int p, unsigned int q, unsigned int *n,
+		       unsigned int *e, unsigned int *d);
 
 #endif /* MYRSA_H */

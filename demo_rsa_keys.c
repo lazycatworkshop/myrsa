@@ -11,23 +11,23 @@
 
 int main()
 {
-	int p;
-	int q;
-	int n;
-	int e;
-	int d;
+	unsigned int p;
+	unsigned int q;
+	unsigned int n;
+	unsigned int e;
+	unsigned int d;
 
 	printf("Pick the first prime number: ");
-	scanf("%d", &p);
+	scanf("%u", &p);
 	printf("Pick the second prime number: ");
-	scanf("%d", &q);
+	scanf("%u", &q);
 
-	printf("p = %d, q = %d\n", p, q);
+	printf("p = %u, q = %u\n", p, q);
 
 	generate_RSA_keys(p, q, &n, &e, &d);
 
-	printf("Public Key: (%d, %d)\n", e, n);
-	printf("Private Key: (%d, %d)\n", d, n);
+	printf("Public Key: (%u, %u)\n", e, n);
+	printf("Private Key: (%u, %u)\n", d, n);
 
 	return EXIT_SUCCESS;
 }
