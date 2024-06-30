@@ -37,8 +37,7 @@ int gcd(int a, int b)
  */
 int mod_inverse(int a, int m)
 {
-	int x;
-	for (x = 1; x < m; x++)
+	for (int x = 1; x < m; x++)
 		if ((a * x) % m == 1)
 			return x;
 	return -1;

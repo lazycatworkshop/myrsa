@@ -16,13 +16,11 @@
  */
 void generate_RSA_keys(int p, int q, int *n, int *e, int *d)
 {
-	int phi;
-
 	/* First compute n as the product of two primes p and q */
 	*n = p * q;
 
 	/* Pick an integer e which is relatively prime to (p - 1) * (q - 1) */
-	phi = (p - 1) * (q - 1);
+	int phi = (p - 1) * (q - 1);
 	*e = 2;
 	while (gcd(*e, phi) != 1) {
 		(*e)++;
