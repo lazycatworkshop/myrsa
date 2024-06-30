@@ -13,6 +13,11 @@
  * @n: Pointer to the modulus.
  * @e: Pointer to the encryption key.
  * @d: Pointer to the decryption key.
+ * 
+ * This function generates a pair of RSA keys, (e, n) and (d, n).
+ * 
+ * NOTE: Given the data type of n, make sure pick proper prime numbers
+ * such that n does not overflow.
  */
 void generate_RSA_keys(int p, int q, int *n, int *e, int *d)
 {
