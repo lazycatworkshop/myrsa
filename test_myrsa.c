@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include "myrsa.h"
 
-// Prototype of the function to be tested
+/* Prototype of the function to be tested */
 void generate_RSA_keys(int p, int q, int *n, int *e, int *d);
 
 // Struct to hold test cases
@@ -37,9 +37,11 @@ void test_generate_RSA_keys()
 		  .expected_n = 187,
 		  .expected_e = 3,
 		  .expected_d = 107 },
-		// Add more test cases here...
-		// Example:
-		// { .prime1 = 13, .prime2 = 19, .expected_n = 247, .expected_e = 5, .expected_d = 77 },
+		/*
+		 * Add more test cases here...
+		 * Example:
+		 * { .prime1 = 13, .prime2 = 19, .expected_n = 247, .expected_e = 5, .expected_d = 77 },
+		 */
 	};
 
 	size_t num_tests = sizeof(tests) / sizeof(tests[0]);
@@ -52,7 +54,7 @@ int main()
 {
 	test_generate_RSA_keys();
 
-	// Add calls to more test functions as needed...
+	/* Add calls to more test functions as needed... */
 
 	return EXIT_SUCCESS;
 }
