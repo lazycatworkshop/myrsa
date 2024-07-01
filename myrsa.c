@@ -3,7 +3,6 @@
  *
  * Author: Benjamin Chin.
  */
-
 #include "myrsa_math.h"
 
 /**
@@ -19,8 +18,8 @@
  * NOTE: Given the data type of n, make sure pick proper prime numbers
  * such that n does not overflow.
  */
-void generate_RSA_keys(unsigned int p, unsigned int q, unsigned int *n,
-		       unsigned int *e, unsigned int *d)
+void generate_RSA_keys(uint32_t p, uint32_t q, uint32_t *n, uint32_t *e,
+		       uint32_t *d)
 {
 	/* First compute n as the product of two primes p and q */
 	*n = p * q;

@@ -6,24 +6,25 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include "myrsa.h"
 
 /* Prototype of the function to be tested */
-void generate_RSA_keys(unsigned int p, unsigned int q, unsigned int *n,
-		       unsigned int *e, unsigned int *d);
+void generate_RSA_keys(uint32_t p, uint32_t q, uint32_t *n, uint32_t *e,
+		       uint32_t *d);
 
-// Struct to hold test cases
+/* Struct to hold test cases */
 typedef struct {
-	unsigned int prime1;
-	unsigned int prime2;
-	unsigned int expected_n;
-	unsigned int expected_e;
-	unsigned int expected_d;
+	uint32_t prime1;
+	uint32_t prime2;
+	uint32_t expected_n;
+	uint32_t expected_e;
+	uint32_t expected_d;
 } rsa_key_test_case;
 
 void run_test_case(rsa_key_test_case test)
 {
-	unsigned int n, e, d;
+	uint32_t n, e, d;
 	generate_RSA_keys(test.prime1, test.prime2, &n, &e, &d);
 	assert(e == test.expected_e);
 	assert(d == test.expected_d);

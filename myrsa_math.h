@@ -7,8 +7,12 @@
  * Author: Benjamin Chin.
  */
 
-int gcd(int a, int b);
-int mod_inverse(int a, int m);
-int extended_gcd(int a, int m);
+#include <stdint.h>
+
+uint32_t gcd(uint32_t a, uint32_t b);
+uint32_t mod_inverse(uint32_t a, uint32_t m);
+uint32_t euclidean_algorithm_recursive(uint32_t a, uint32_t b, int32_t *x,
+				       int32_t *y);
+uint32_t euclidean_algorithm(uint32_t a, uint32_t b, int32_t *x, int32_t *y);
 
 #endif /* MYRSA_MATH_H */

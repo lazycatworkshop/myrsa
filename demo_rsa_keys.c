@@ -11,11 +11,11 @@
 
 int main()
 {
-	unsigned int p;
-	unsigned int q;
-	unsigned int n;
-	unsigned int e;
-	unsigned int d;
+	uint32_t p;
+	uint32_t q;
+	uint32_t n;
+	uint32_t e;
+	uint32_t d;
 
 	printf("Pick the first prime number: ");
 	scanf("%u", &p);

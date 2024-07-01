@@ -1,8 +1,4 @@
-/**
- * myrsa_math.c - Implementation of math functions.
- *
- * Author: Benjamin Chin.
- */
+#include <stdint.h>
 
 /**
  * gcd - Calculate the greatest common divisor of two integers.
@@ -13,9 +9,9 @@
  * 
  * Return: The greatest common divisor.
  */
-int gcd(int a, int b)
+uint32_t gcd(uint32_t a, uint32_t b)
 {
-	int temp;
+	uint32_t temp;
 	while (b != 0) {
 		temp = b;
 		b = a % b;
@@ -31,55 +27,98 @@ int gcd(int a, int b)
  * @m: The modulus
  *
  * This function iterates through all possible values of x from 1 to m-1 and
- * 	returns the first x such that (a * x) % m == 1.
+ * returns the first x such that (a * x) % m == 1.
  *
  * Returns: The modular inverse of a modulo m, or -1 if no such inverse exists.
  */
-int mod_inverse(int a, int m)
+int32_t mod_inverse(uint32_t a, uint32_t m)
 {
-	for (int x = 1; x < m; x++)
+	for (uint32_t x = 1; x < m; x++)
 		if ((a * x) % m == 1)
 			return x;
 	return -1;
 }
 
 /**
- * extended_gcd - Calculate the modular inverse of a modulo m using the
- * 	Extended Euclidean Algorithm
- * @a: The integer for which the modular inverse is to be calculated
- * @m: The modulus
- *
- * This function calculates the modular inverse of a modulo m using the
- * 	Extended Euclidean Algorithm. It returns the modular inverse of a
- * 	modulo m.
- *
- * Returns: The modular inverse of a modulo m.
+ * euclidean_algorithm_recursive - Calculate the greatest common divisor of
+ *  	two integers using recursion.
+ * @a: First integer.
+ * @b: Second integer.
+ * @x: Pointer to the Bézout coefficient x.
+ * @y: Pointer to the Bézout coefficient y.
+ * 
+ * This function calculates the greatest common divisor of a and b using the
+ * extended Euclidean algorithm recursively. It also calculates the Bézout
+ * coefficients x and y such that ax + by = gcd(a, b).
+ * 
+ * Return: The greatest common divisor.
+ * 
+ * Note: The Bézout coefficients x and y are stored in the pointers x and y
+ * respectively.
+ * 
  */
-int extended_gcd(int a, int m)
+uint32_t euclidean_algorithm_recursive(uint32_t a, uint32_t b, int32_t *x,
+				       int32_t *y)
 {
-	int m0 = m, t, q;
-	int x0 = 0, x1 = 1;
-
-	if (m == 1)
-		return 0;
-
-	/* Apply extended Euclid Algorithm */
-	while (a > 1) {
-		/* q is quotient */
-		q = a / m;
-		t = m;
-
-		/* m is remainder now, process same as Euclid's algo */
-		m = a % m, a = t;
-
-		t = x0;
-		x0 = x1 - q * x0;
-		x1 = t;
+	if (b == 0) {
+		*x = 1;
+		*y = 0;
+		return a;
 	}
 
-	/* Make x1 positive */
-	if (x1 < 0)
-		x1 += m0;
+	int32_t x1, y1;
+	uint32_t gcd = euclidean_algorithm_recursive(b, a % b, &x1, &y1);
+	*x = y1;
+	*y = x1 - (a / b) * y1;
+	return gcd;
+}
 
-	return x1;
+/**
+ * euclidean_algorithm - Calculate the greatest common divisor of two integers
+ * 			 using iteration.
+ * @a: First integer.
+ * @b: Second integer.
+ * @x: Pointer to the Bézout coefficient x.
+ * @y: Pointer to the Bézout coefficient y.
+ * 
+ * This function calculates the greatest common divisor of a and b using the
+ * extended Euclidean algorithm iteratively. It also calculates the Bézout
+ * coefficients x and y such that ax + by = gcd(a, b).
+ * 
+ * Return: The greatest common divisor.
+ * 
+ * Note: The Bézout coefficients x and y are stored in the pointers x and y
+ * respectively.
+ * 
+ */
+uint32_t euclidean_algorithm(uint32_t a, uint32_t b, int32_t *x, int32_t *y)
+{
+	int32_t x0 = 1, y0 = 0; /* Initially x and y when b is 0 */
+	int32_t x1 = 0, y1 = 1; /* Next values of x and y */
+
+	while (b != 0) {
+		uint32_t q = a / b; /* Quotient */
+		uint32_t r = a % b; /* Remainder */
+
+		/* Update a and b for the next iteration */
+		a = b;
+		b = r;
+
+		/* Temporary variables to hold previous state of x1 and y1 */
+		int32_t tempX = x1, tempY = y1;
+
+		/* Update x1 and y1 based on the quotient */
+		x1 = x0 - q * x1;
+		y1 = y0 - q * y1;
+
+		/* Update x0 and y0 for the next iteration */
+		x0 = tempX;
+		y0 = tempY;
+	}
+
+	/* When b is 0, a is the GCD and the last valid coefficients are in
+	   x0 and y0 */
+	*x = x0;
+	*y = y0;
+	return a;
 }
