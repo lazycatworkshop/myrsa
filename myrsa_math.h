@@ -9,6 +9,7 @@
 
 #include <stdint.h>
 
+uint32_t gcd_recursive(uint32_t u, uint32_t v);
 uint32_t gcd(uint32_t a, uint32_t b);
 uint32_t mod_inverse(uint32_t a, uint32_t m);
 uint32_t euclidean_algorithm_recursive(uint32_t a, uint32_t b, int32_t *x,
