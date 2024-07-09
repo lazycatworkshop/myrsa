@@ -48,3 +48,20 @@ bin/
 
 # Ignore Node.js dependencies
 node_modules/
+
+# Ignore LaTex byproducts
+*.aux
+*.bbl
+*.blg
+*.log
+*.out
+*.pdf
+*.toc
+*.synctex.gz
+*.fdb_latexmk
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.synctex(busy)
+*.synctex.gz(busy)
+
