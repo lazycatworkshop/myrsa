@@ -13,7 +13,6 @@ BIN_DIR=bin
 TEST_SRC_DIR=test
 TEST_BIN_DIR=test
 
-
 INC_DIR=include
 CCFLAG += -I$(INC_DIR)
 
@@ -35,7 +34,11 @@ test_myrsa_OBJECTS=$(test_myrsa_SOURCES:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 test_myrsa_math_OBJECTS=$(test_myrsa_math_SOURCES:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 
 # Targets for executables
-all: $(EXECUTABLES) $(TEST_BINARIES)
+all: $(OBJ_DIR) $(BIN_DIR) $(TEST_BIN_DIR) $(EXECUTABLES) $(TEST_BINARIES)
+
+# Rule to create directories
+$(OBJ_DIR) $(BIN_DIR) $(TEST_BIN_DIR):
+	@mkdir -p $(OBJ_DIR) $(BIN_DIR) $(TEST_BIN_DIR)
 
 demo_rsa_keys: $(demo_rsa_keys_OBJECTS)
 	$(CC) $^ -o $(BIN_DIR)/$@
@@ -67,4 +70,4 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 # Clean target
 .PHONY: clean
 clean:
-	rm -f $(OBJ_DIR)/* $(BIN_DIR)/* $(TEST_BIN_DIR)/*
+	rm -rf $(OBJ_DIR)/* $(BIN_DIR)/* $(TEST_BIN_DIR)/* 
