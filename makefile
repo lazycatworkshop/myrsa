@@ -70,4 +70,7 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 # Clean target
 .PHONY: clean
 clean:
-	rm -rf $(OBJ_DIR)/* $(BIN_DIR)/* $(TEST_BIN_DIR)/* 
+	rm -rf $(OBJ_DIR)/* $(BIN_DIR)/* $(TEST_BIN_DIR)/*
+
+clean_dir:
+	rm -rf $(OBJ_DIR) $(BIN_DIR) $(TEST_BIN_DIR)
