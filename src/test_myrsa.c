@@ -52,9 +52,22 @@ void test_generate_RSA_keys()
 	}
 }
 
+void test_crc()
+{
+	assert(crc16_ccitt("", 0) == 0xFFFF);
+	assert(crc16_ccitt("a", 1) == 0x9D77);
+	assert(crc16_ccitt("The quick brown fox jumps over the lazy dog", 43) ==
+	       0x8FDD);
+}
+
 int main()
 {
 	test_generate_RSA_keys();
+
+	assert(RSA_trapdoor(5, 3, 11) == 4);
+	assert(RSA_trapdoor(987654321, 123456789, 1000000007) == 379110096);
+
+	test_crc();
 
 	/* Add calls to more test functions as needed... */
 

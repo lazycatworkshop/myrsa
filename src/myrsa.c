@@ -4,6 +4,7 @@
  * Author: Benjamin Chin.
  */
 #include "myrsa_math.h"
+#include <stddef.h>
 
 /**
  * generate_RSA_keys - Generate RSA public and private keys.
@@ -37,4 +38,53 @@ void generate_RSA_keys(uint32_t p, uint32_t q, uint32_t *n, uint32_t *e,
 	 * 	(e * d) % ((p - 1) * (q - 1)) = 1
 	 */
 	*d = mod_inverse(*e, phi);
+}
+
+/**
+ * RSA_trapdoor- Encrypt or decrypt a message by RSA.
+ *
+ * @message: The message.
+ * @key: The key.
+ * @modulus: The modulus.
+ * 
+ * This function uses exponentiation by "repeated squaring and multiplication
+ *  	to compute C = M^key % modulus.
+ * 
+ * Return: The result of the modular exponentiation.
+ */
+uint64_t RSA_trapdoor(uint64_t message, uint64_t key, uint64_t modulus)
+{
+	uint64_t r = 1; /* when exponent is 0 */
+
+	message = message % modulus;
+
+	while (key > 0) {
+		/* If LSB is 1,  multiply the base with result */
+		if (key % 2 == 1)
+			r = (r * message) % modulus;
+
+		key = key >> 1; /* Next bit */
+		message = (message * message) % modulus; /* Square */
+	}
+
+	return r;
+}
+
+uint16_t crc16_ccitt(const char *data, size_t len)
+{
+#define CRC16_POLY 0x1021
+
+	uint16_t crc = 0xFFFF;
+
+	for (size_t i = 0; i < len; i++) {
+		crc ^= (uint16_t)data[i] << 8;
+		for (int j = 0; j < 8; j++) {
+			if (crc & 0x8000)
+				crc = (crc << 1) ^ CRC16_POLY;
+			else
+				crc <<= 1;
+		}
+	}
+
+	return crc;
 }
