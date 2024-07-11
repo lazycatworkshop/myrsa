@@ -70,6 +70,19 @@ uint64_t RSA_trapdoor(uint64_t message, uint64_t key, uint64_t modulus)
 	return r;
 }
 
+/**
+ * crc16_ccitt - Calculates the CRC-16-CCITT checksum.
+ *
+ * @param data Pointer to the data array.
+ * @param len Length of the data array.
+ * 
+ * This function computes the cyclic redundancy check (CRC) checksum using the
+ * CCITT-16 polynomial, 0x1021. This implementation starts with an initial
+ * value of 0xFFFF and processes each byte of the input data array, bit by bit,
+ * to compute the final CRC value.
+ * 
+ * @return The computed CRC16-CCITT checksum as a 16-bit unsigned integer.
+ */
 uint16_t crc16_ccitt(const char *data, size_t len)
 {
 #define CRC16_POLY 0x1021
