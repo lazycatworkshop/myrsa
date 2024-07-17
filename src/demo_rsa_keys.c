@@ -6,8 +6,20 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include "myrsa_math.h"
 #include "myrsa.h"
+
+bool is_prime(uint32_t number)
+{
+	if (number <= 1)
+		return false;
+	for (uint32_t i = 2; i * i <= number; i++) {
+		if (number % i == 0)
+			return false;
+	}
+	return true;
+}
 
 int main()
 {
@@ -19,8 +31,17 @@ int main()
 
 	printf("Pick the first prime number: ");
 	scanf("%u", &p);
+	if (!is_prime(p)) {
+		printf("Error: %u is not a prime number.\n", p);
+		return EXIT_FAILURE;
+	}
+
 	printf("Pick the second prime number: ");
 	scanf("%u", &q);
+	if (!is_prime(q)) {
+		printf("Error: %u is not a prime number.\n", q);
+		return EXIT_FAILURE;
+	}
 
 	printf("p = %u, q = %u\n", p, q);
 
