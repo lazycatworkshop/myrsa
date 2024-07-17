@@ -83,6 +83,7 @@ uint64_t RSA_trapdoor(uint64_t message, uint64_t key, uint64_t modulus)
  * 
  * @return The computed CRC16-CCITT checksum as a 16-bit unsigned integer.
  */
+#define CRC16_POLY 0x1021
 uint16_t crc16_ccitt(const char *data, size_t len)
 {
 #define CRC16_POLY 0x1021
@@ -97,6 +98,40 @@ uint16_t crc16_ccitt(const char *data, size_t len)
 			else
 				crc <<= 1;
 		}
+	}
+
+	return crc;
+}
+
+static uint16_t crc16_table[256];
+static int crc_table_initialized = 0; /* If the table has been initialized */
+
+void generate_crc16_table()
+{
+	for (int i = 0; i < 256; i++) {
+		uint16_t crc = i << 8;
+		for (int j = 0; j < 8; j++) {
+			if (crc & 0x8000)
+				crc = (crc << 1) ^ CRC16_POLY;
+			else
+				crc <<= 1;
+		}
+		crc16_table[i] = crc;
+	}
+	crc_table_initialized = 1; /* The table is initialized */
+}
+
+uint16_t crc16_ccitt_table_lookup(const char *data, size_t len)
+{
+	if (!crc_table_initialized) { /* If the table has not been initialized, */
+		generate_crc16_table(); /* then initialize the table. */
+	}
+
+	uint16_t crc = 0xFFFF;
+
+	for (size_t i = 0; i < len; i++) {
+		uint8_t pos = (crc >> 8) ^ (uint8_t)data[i];
+		crc = (crc << 8) ^ crc16_table[pos];
 	}
 
 	return crc;

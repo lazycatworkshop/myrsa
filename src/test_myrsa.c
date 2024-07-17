@@ -58,6 +58,12 @@ void test_crc()
 	assert(crc16_ccitt("a", 1) == 0x9D77);
 	assert(crc16_ccitt("The quick brown fox jumps over the lazy dog", 43) ==
 	       0x8FDD);
+
+	assert(crc16_ccitt_table_lookup("", 0) == 0xFFFF);
+	assert(crc16_ccitt_table_lookup("a", 1) == 0x9D77);
+	assert(crc16_ccitt_table_lookup(
+		       "The quick brown fox jumps over the lazy dog", 43) ==
+	       0x8FDD);
 }
 
 int main()
