@@ -9,11 +9,11 @@
 
 #include <stdint.h>
 
-uint32_t gcd_recursive(uint32_t u, uint32_t v);
-uint32_t gcd(uint32_t a, uint32_t b);
-uint32_t mod_inverse(uint32_t a, uint32_t m);
-uint32_t euclidean_algorithm_recursive(uint32_t a, uint32_t b, int32_t *x,
+uint64_t gcd_recursive(uint64_t u, uint64_t v);
+uint64_t gcd(uint64_t a, uint64_t b);
+uint64_t mod_inverse(uint64_t a, uint64_t m);
+uint64_t euclidean_algorithm_recursive(uint64_t a, uint64_t b, int32_t *x,
 				       int32_t *y);
-uint32_t euclidean_algorithm(uint32_t a, uint32_t b, int32_t *x, int32_t *y);
+uint64_t euclidean_algorithm(uint64_t a, uint64_t b, int32_t *x, int32_t *y);
 
 #endif /* MYRSA_MATH_H */

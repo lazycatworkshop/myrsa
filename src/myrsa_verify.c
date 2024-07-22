@@ -19,7 +19,7 @@
 
 enum VERBOSE_LEVEL { QUIET = 0, VERBOSE = 1, DEBUG = 2 };
 
-uint32_t verbose = QUIET;
+uint64_t verbose = QUIET;
 
 /* Define the long options */
 static struct option long_options[] = {
@@ -42,18 +42,19 @@ int main(int argc, char *argv[])
 
 	while ((opt = getopt_long(argc, argv, "k:m:f:s:v", long_options,
 				  &option_index)) != -1) {
+		char *end_ptr = NULL;
 		switch (opt) {
 		case 'k':
-			public_key = atoi(optarg);
+			public_key = strtoull(optarg, &end_ptr, 10);
 			break;
 		case 'm':
-			modulus = atoi(optarg);
+			modulus = strtoull(optarg, &end_ptr, 10);
 			break;
 		case 'f':
 			message_file = optarg;
 			break;
 		case 's':
-			signature = atoi(optarg);
+			signature = strtoull(optarg, &end_ptr, 10);
 			break;
 		case 'v':
 			verbose++;
@@ -103,20 +104,24 @@ int main(int argc, char *argv[])
 	size_t len = fread(message, 1, file_length, fp);
 	fclose(fp);
 
-	/* Calculate the CRC32 of the message */
+	/* Calculate the CRC of the message */
+#if 0
 	uint16_t crc = crc16_ccitt(message, len);
+#else
+	uint32_t crc = crc32_b(message, len);
+#endif
 
 	if (verbose > QUIET) {
-		printf("CRC: 0x%08X\n", crc);
+		printf("CRC: %u\n", crc);
 	}
 
 	/* Sign the message */
-	uint64_t expected_crc = RSA_trapdoor(signature, public_key, modulus);
-	printf("Expected CRC: %lu\n", expected_crc);
+	uint32_t expected_crc = RSA_trapdoor(signature, public_key, modulus);
+	printf("Expected CRC: %u\n", expected_crc);
 	if (crc == expected_crc) {
 		printf("Message verified\n");
 	} else {
-		printf("Actual CRC: %ul\n", crc);
+		printf("Actual CRC: %u\n", crc);
 	}
 
 	free(message);

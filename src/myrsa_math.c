@@ -9,7 +9,7 @@
  * 
  * Return: The greatest common divisor.
  */
-uint32_t gcd_recursive(uint32_t u, uint32_t v)
+uint64_t gcd_recursive(uint64_t u, uint64_t v)
 {
 	if (v == 0)
 		/* gcd(u, 0) = |u| */
@@ -28,9 +28,9 @@ uint32_t gcd_recursive(uint32_t u, uint32_t v)
  * 
  * Return: The greatest common divisor.
  */
-uint32_t gcd(uint32_t a, uint32_t b)
+uint64_t gcd(uint64_t a, uint64_t b)
 {
-	uint32_t temp;
+	uint64_t temp;
 	while (b != 0) {
 		temp = b;
 		b = a % b;
@@ -48,14 +48,17 @@ uint32_t gcd(uint32_t a, uint32_t b)
  * This function iterates through all possible values of x from 1 to m-1 and
  * returns the first x such that (a * x) % m == 1.
  *
- * Returns: The modular inverse of a modulo m, or -1 if no such inverse exists.
+ * Returns: The modular inverse of a modulo m, or 0 if no such inverse exists.
  */
-int32_t mod_inverse(uint32_t a, uint32_t m)
+int64_t mod_inverse(uint64_t a, uint64_t m)
 {
-	for (uint32_t x = 1; x < m; x++)
-		if ((a * x) % m == 1)
-			return x;
-	return -1;
+	for (uint64_t x = 2; x < m; x++) {
+		if (((a * x) % m) == 1)
+			if (a != x)
+				return x;
+	}
+
+	return 0; /* No modular inverse exists */
 }
 
 /**
@@ -76,7 +79,7 @@ int32_t mod_inverse(uint32_t a, uint32_t m)
  * respectively.
  * 
  */
-uint32_t euclidean_algorithm_recursive(uint32_t a, uint32_t b, int32_t *x,
+uint64_t euclidean_algorithm_recursive(uint64_t a, uint64_t b, int32_t *x,
 				       int32_t *y)
 {
 	if (b == 0) {
@@ -86,7 +89,7 @@ uint32_t euclidean_algorithm_recursive(uint32_t a, uint32_t b, int32_t *x,
 	}
 
 	int32_t x1, y1;
-	uint32_t gcd = euclidean_algorithm_recursive(b, a % b, &x1, &y1);
+	uint64_t gcd = euclidean_algorithm_recursive(b, a % b, &x1, &y1);
 	*x = y1;
 	*y = x1 - (a / b) * y1;
 	return gcd;
@@ -110,14 +113,14 @@ uint32_t euclidean_algorithm_recursive(uint32_t a, uint32_t b, int32_t *x,
  * respectively.
  * 
  */
-uint32_t euclidean_algorithm(uint32_t a, uint32_t b, int32_t *x, int32_t *y)
+uint64_t euclidean_algorithm(uint64_t a, uint64_t b, int32_t *x, int32_t *y)
 {
 	int32_t x0 = 1, y0 = 0; /* Initially x and y when b is 0 */
 	int32_t x1 = 0, y1 = 1; /* Next values of x and y */
 
 	while (b != 0) {
-		uint32_t q = a / b; /* Quotient */
-		uint32_t r = a % b; /* Remainder */
+		uint64_t q = a / b; /* Quotient */
+		uint64_t r = a % b; /* Remainder */
 
 		/* Update a and b for the next iteration */
 		a = b;

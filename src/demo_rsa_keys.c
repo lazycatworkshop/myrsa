@@ -10,11 +10,11 @@
 #include "myrsa_math.h"
 #include "myrsa.h"
 
-bool is_prime(uint32_t number)
+bool is_prime(uint64_t number)
 {
 	if (number <= 1)
 		return false;
-	for (uint32_t i = 2; i * i <= number; i++) {
+	for (uint64_t i = 2; i * i <= number; i++) {
 		if (number % i == 0)
 			return false;
 	}
@@ -23,32 +23,32 @@ bool is_prime(uint32_t number)
 
 int main()
 {
-	uint32_t p;
-	uint32_t q;
-	uint32_t n;
-	uint32_t e;
-	uint32_t d;
+	uint64_t p;
+	uint64_t q;
+	uint64_t n;
+	uint64_t e;
+	uint64_t d;
 
 	printf("Pick the first prime number: ");
-	scanf("%u", &p);
+	scanf("%lu", &p);
 	if (!is_prime(p)) {
-		printf("Error: %u is not a prime number.\n", p);
+		printf("Error: %lu is not a prime number.\n", p);
 		return EXIT_FAILURE;
 	}
 
 	printf("Pick the second prime number: ");
-	scanf("%u", &q);
+	scanf("%lu", &q);
 	if (!is_prime(q)) {
-		printf("Error: %u is not a prime number.\n", q);
+		printf("Error: %lu is not a prime number.\n", q);
 		return EXIT_FAILURE;
 	}
 
-	printf("p = %u, q = %u\n", p, q);
+	printf("p = %lu, q = %lu\n", p, q);
 
 	generate_RSA_keys(p, q, &n, &e, &d);
 
-	printf("Public Key: (%u, %u)\n", e, n);
-	printf("Private Key: (%u, %u)\n", d, n);
+	printf("Public Key: (%lu, %lu)\n", e, n);
+	printf("Private Key: (%lu, %lu)\n", d, n);
 
 	return EXIT_SUCCESS;
 }

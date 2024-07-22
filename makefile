@@ -2,7 +2,7 @@ CC=gcc
 CFLAGS=-Wall -Iinclude -std=c99
 # Conditional debug flags based on the DEBUG variable
 ifdef DEBUG
-CFLAGS += -g -O0 -DDEBUG
+CFLAGS += -g -O0
 else
 CFLAGS += -O2
 endif

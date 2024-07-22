@@ -11,18 +11,18 @@
 
 void test_generate_RSA_keys()
 {
-	uint32_t prime1, prime2;
-	uint32_t n, e, d;
+	uint64_t prime1, prime2;
+	uint64_t n, e, d;
 
 	generate_RSA_keys(prime1 = 11, prime2 = 17, &n, &e, &d);
-	assert(e == 3);
-	assert(d == 107);
+	assert(e == 19);
+	assert(d == 59);
 	assert(n == 187);
 }
 
 void test_RSA_trapdoor()
 {
-	uint32_t message, key, modulus;
+	uint64_t message, key, modulus;
 	assert(RSA_trapdoor(message = 5, key = 3, modulus = 11) == 4);
 	assert(RSA_trapdoor(987654321, 123456789, 1000000007) == 379110096);
 }
@@ -39,6 +39,10 @@ void test_crc()
 	assert(crc16_ccitt_table_lookup(
 		       "The quick brown fox jumps over the lazy dog", 43) ==
 	       0x8FDD);
+
+	assert(crc32_b("", 0) == 0x0);
+	assert(crc32_b("The quick brown fox jumps over the lazy dog", 43) ==
+	       0x414FA339);
 }
 
 int main()
