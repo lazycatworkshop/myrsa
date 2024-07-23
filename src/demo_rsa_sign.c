@@ -17,16 +17,11 @@
 #include <getopt.h>
 #include "myrsa.h"
 
-enum VERBOSE_LEVEL { QUIET = 0, VERBOSE = 1, DEBUG = 2 };
-
-uint64_t verbose = QUIET;
-
 /* Define the long options */
 static struct option long_options[] = {
 	{ "private-key", required_argument, 0, 'k' },
 	{ "modulus", required_argument, 0, 'm' },
 	{ "message-file", required_argument, 0, 'f' },
-	{ "verbose", no_argument, 0, 'v' },
 	{ 0, 0, 0, 0 } // End of options marker
 };
 
@@ -38,7 +33,7 @@ int main(int argc, char *argv[])
 	uint64_t modulus = 0;
 	char *message_file = NULL;
 
-	while ((opt = getopt_long(argc, argv, "k:m:f:v", long_options,
+	while ((opt = getopt_long(argc, argv, "k:m:f:", long_options,
 				  &option_index)) != -1) {
 		char *end_ptr = NULL;
 		switch (opt) {
@@ -51,12 +46,9 @@ int main(int argc, char *argv[])
 		case 'f':
 			message_file = optarg;
 			break;
-		case 'v':
-			verbose++;
-			break;
 		default: /* '?' */
 			fprintf(stderr,
-				"Usage: %s --key <private_key> --modulus <modulus> --message-file <message_file> [--verbose]\n",
+				"Usage: %s --key <private_key> --modulus <modulus> --message-file <message_file>\n",
 				argv[0]);
 			return EXIT_FAILURE;
 		}
@@ -64,7 +56,7 @@ int main(int argc, char *argv[])
 
 	if (private_key == 0 || modulus == 0 || message_file == NULL) {
 		fprintf(stderr,
-			"Usage: %s --private-key <private_key> --modulus <modulus> --message-file <message_file> [--verbose]\n",
+			"Usage: %s --private-key <private_key> --modulus <modulus> --message-file <message_file>\n",
 			argv[0]);
 		return EXIT_FAILURE;
 	}
@@ -104,7 +96,7 @@ int main(int argc, char *argv[])
 #else
 	uint32_t crc = crc32_b(message, len);
 #endif
-	printf("CRC\t: %u\n", crc);
+	printf("CRC\t\t: %u\n", crc);
 
 	if (crc > modulus) {
 		fprintf(stderr, "CRC is larger than modulus\n");

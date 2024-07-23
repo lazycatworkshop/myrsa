@@ -42,7 +42,7 @@ This will compile the source files and generate the executable files in the bin/
 
 - **`/doc`**: The documents.
 
-## Usage
+## Demonstrations
 
 ### Generate RSA keys
 ```bash
@@ -50,11 +50,11 @@ This will compile the source files and generate the executable files in the bin/
 ```
 ### Signing a Message
 ```bash
-./bin/myrsa_sign --key <private_key> --modulus <modulus> --message-file <message_file>
+./bin/demo_rsa_sign --key <private_key> --modulus <modulus> --message-file <message_file>
 ```
 ### Verifing a Message
 ```bash
-./bin/myrsa_verify --key <public_key> --modulus <modulus> --message-file <message_file> --signature <signature>
+./bin/demo_rsa_verify --key <public_key> --modulus <modulus> --message-file <message_file> --signature <signature>
 ```
 ## Acknowledgments
 

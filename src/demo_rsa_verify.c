@@ -17,17 +17,12 @@
 #include <getopt.h>
 #include "myrsa.h"
 
-enum VERBOSE_LEVEL { QUIET = 0, VERBOSE = 1, DEBUG = 2 };
-
-uint64_t verbose = QUIET;
-
 /* Define the long options */
 static struct option long_options[] = {
 	{ "key", required_argument, 0, 'k' },
 	{ "modulus", required_argument, 0, 'm' },
 	{ "message-file", required_argument, 0, 'f' },
 	{ "signature", required_argument, 0, 's' },
-	{ "verbose", no_argument, 0, 'v' },
 	{ 0, 0, 0, 0 } // End of options marker
 };
 
@@ -40,7 +35,7 @@ int main(int argc, char *argv[])
 	char *message_file = NULL;
 	uint64_t signature = 0;
 
-	while ((opt = getopt_long(argc, argv, "k:m:f:s:v", long_options,
+	while ((opt = getopt_long(argc, argv, "k:m:f:s:", long_options,
 				  &option_index)) != -1) {
 		char *end_ptr = NULL;
 		switch (opt) {
@@ -56,12 +51,9 @@ int main(int argc, char *argv[])
 		case 's':
 			signature = strtoull(optarg, &end_ptr, 10);
 			break;
-		case 'v':
-			verbose++;
-			break;
 		default: /* '?' */
 			fprintf(stderr,
-				"Usage: %s --key <public_key> --modulus <modulus> --message-file <message_file> --signature <signature>[--verbose]\n",
+				"Usage: %s --key <public_key> --modulus <modulus> --message-file <message_file> --signature <signature>\n",
 				argv[0]);
 			return EXIT_FAILURE;
 		}
@@ -70,7 +62,7 @@ int main(int argc, char *argv[])
 	if (public_key == 0 || modulus == 0 || message_file == NULL ||
 	    signature == 0) {
 		fprintf(stderr,
-			"Usage: %s --key <public_key> --modulus <modulus> --message-file <message_file> --signature <signature> [--verbose]\n",
+			"Usage: %s --key <public_key> --modulus <modulus> --message-file <message_file> --signature <signature>\n",
 			argv[0]);
 		return EXIT_FAILURE;
 	}
@@ -111,17 +103,13 @@ int main(int argc, char *argv[])
 	uint32_t crc = crc32_b(message, len);
 #endif
 
-	if (verbose > QUIET) {
-		printf("CRC: %u\n", crc);
-	}
-
 	/* Sign the message */
 	uint32_t expected_crc = RSA_trapdoor(signature, public_key, modulus);
-	printf("Expected CRC: %u\n", expected_crc);
+	printf("Expected CRC\t: %u\n", expected_crc);
 	if (crc == expected_crc) {
 		printf("Message verified\n");
 	} else {
-		printf("Actual CRC: %u\n", crc);
+		printf("Actual CRC\t: %u\n", crc);
 	}
 
 	free(message);

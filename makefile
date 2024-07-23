@@ -17,15 +17,15 @@ INC_DIR=include
 CCFLAG += -I$(INC_DIR)
 
 # Define executables and their specific source files
-EXECUTABLES=demo_rsa_keys myrsa_sign myrsa_verify
+EXECUTABLES=demo_rsa_keys demo_rsa_sign demo_rsa_verify
 demo_rsa_keys_SOURCES=$(SRC_DIR)/demo_rsa_keys.c $(SRC_DIR)/myrsa.c  $(SRC_DIR)/myrsa_math.c
-myrsa_sign_SOURCES=$(SRC_DIR)/myrsa_sign.c $(SRC_DIR)/myrsa.c $(SRC_DIR)/myrsa_math.c
-myrsa_verify_SOURCES=$(SRC_DIR)/myrsa_verify.c $(SRC_DIR)/myrsa.c $(SRC_DIR)/myrsa_math.c
+demo_rsa_sign_SOURCES=$(SRC_DIR)/demo_rsa_sign.c $(SRC_DIR)/myrsa.c $(SRC_DIR)/myrsa_math.c
+demo_rsa_verify_SOURCES=$(SRC_DIR)/demo_rsa_verify.c $(SRC_DIR)/myrsa.c $(SRC_DIR)/myrsa_math.c
 
 # Convert source files to object files for each executable
 demo_rsa_keys_OBJECTS=$(demo_rsa_keys_SOURCES:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
-myrsa_sign_OBJECTS=$(myrsa_sign_SOURCES:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
-myrsa_verify_OBJECTS=$(myrsa_verify_SOURCES:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
+demo_rsa_sign_OBJECTS=$(demo_rsa_sign_SOURCES:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
+demo_rsa_verify_OBJECTS=$(demo_rsa_verify_SOURCES:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 
 TEST_BINARIES=test_myrsa test_myrsa_math
 test_myrsa_SOURCES=$(SRC_DIR)/test_myrsa.c $(SRC_DIR)/myrsa.c $(SRC_DIR)/myrsa_math.c
@@ -45,10 +45,10 @@ $(OBJ_DIR) $(BIN_DIR) $(TEST_BIN_DIR):
 demo_rsa_keys: $(demo_rsa_keys_OBJECTS)
 	$(CC) $^ -o $(BIN_DIR)/$@
 
-myrsa_sign: $(myrsa_sign_OBJECTS)
+demo_rsa_sign: $(demo_rsa_sign_OBJECTS)
 	$(CC) $^ -o $(BIN_DIR)/$@
 
-myrsa_verify: $(myrsa_verify_OBJECTS)
+demo_rsa_verify: $(demo_rsa_verify_OBJECTS)
 	$(CC) $^ -o $(BIN_DIR)/$@
 
 # Compile test sources into test binaries
