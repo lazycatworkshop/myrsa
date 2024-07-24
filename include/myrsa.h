@@ -3,9 +3,7 @@
 
 #include <stdint.h>
 /**
- * myrsa.h - Header file for RSA key generation functions.
- *
- * Author: Benjamin Chin.
+ * myrsa.h - Header file for RSA cryptography functions.
  */
 void generate_RSA_keys(uint64_t p, uint64_t q, uint64_t *n, uint64_t *e,
 		       uint64_t *d);

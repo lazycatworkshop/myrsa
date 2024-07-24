@@ -1,7 +1,5 @@
 /**
  * myrsa.c - Implementation of RSA functions.
- *
- * Author: Benjamin Chin.
  */
 #include "myrsa_math.h"
 #include <stddef.h>

@@ -1,8 +1,7 @@
 /**
  * test_myrsa_math.c - Unit tests for myrsa_math functions.
- *
- * Author: Benjamin Chin.
  */
+
 #include <assert.h>
 #include <stdlib.h>
 #include "myrsa_math.h"

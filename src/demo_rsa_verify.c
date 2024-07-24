@@ -4,11 +4,6 @@
  * This file contains the main function to verify a message with associated
  * RSA public key. The message is from a file, and the public key and modulus
  * are provided as arguments. The result is printed to stdout.
- * Example:
- * 
- *         ./myrsa_verify public_key modulus message.txt 
- *
- * Author: Benjamin Chin.
  */
 #include <stdio.h>
 #include <stdlib.h>

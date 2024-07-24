@@ -1,11 +1,13 @@
 #include <stdint.h>
 
 /**
- * gcd_recursive - Calculate the greatest common divisor of two integers recursively.
+ * gcd_recursive - Calculate the greatest common divisor of two integers
+ * 	recursively.
  * @u: First integer.
  * @v: Second integer.
  * 
- * This function calculates gcd using the Euclidean algorithm in a recursive manner.
+ * 	This function calculates gcd using the Euclidean algorithm in a recursive
+ * manner.
  * 
  * Return: The greatest common divisor.
  */

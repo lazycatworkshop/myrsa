@@ -3,8 +3,6 @@
 
 /**
  * myrsa_math.h - Header file for math functions.
- *
- * Author: Benjamin Chin.
  */
 
 #include <stdint.h>

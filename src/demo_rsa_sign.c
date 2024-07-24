@@ -4,12 +4,8 @@
  * This file contains the main function to sign a message using RSA. The
  * message is from a file, and the public key and modulus are provided as
  * arguments. The signature is printed to stdout.
- * Example:
- * 
- *         ./myrsa_sign public_key modulus message.txt 
- *
- * Author: Benjamin Chin.
  */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
