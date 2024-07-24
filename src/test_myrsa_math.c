@@ -20,7 +20,7 @@ int main()
 
 	assert(mod_inverse(7, 40) == 23);
 	assert(mod_inverse(3, 11) == 4);
-	assert(mod_inverse(5, 12) == 5);
+	assert(mod_inverse(5, 12) == 0); /* No solution */
 
 	int32_t x, y;
 	assert(euclidean_algorithm_recursive(8, 12, &x, &y) == 4);
