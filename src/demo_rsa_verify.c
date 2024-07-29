@@ -63,6 +63,11 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 
+	if (signature > modulus) {
+		fprintf(stderr, "Signature is larger than modulus\n");
+		return EXIT_FAILURE;
+	}
+
 	/* Check the length of the file */
 	FILE *fp = fopen(message_file, "r");
 	if (fp == NULL) {

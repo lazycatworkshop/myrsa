@@ -58,17 +58,13 @@ void generate_RSA_keys(uint64_t p, uint64_t q, uint64_t *n, uint64_t *e,
  * @modulus: The modulus.
  * 
  * This function uses exponentiation by "repeated squaring and multiplication
- *  	to compute C = M^key % modulus".
+ * to compute C = M^key % modulus". The caller is responsible for ensuring
+ * the input message is not greater than the modulus.
  * 
  * Return: The result of the modular exponentiation.
  */
 uint64_t RSA_trapdoor(uint64_t message, uint64_t key, uint64_t modulus)
 {
-	if (message > modulus) {
-		perr("Message is greater than modulus\n");
-		exit(EXIT_FAILURE);
-	}
-
 	uint64_t r = 1;
 	while (key > 0) {
 		if (key & 1) { /* Odd then multiply r by the current base */
