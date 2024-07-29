@@ -4,6 +4,7 @@
 #include "myrsa_math.h"
 #include <stddef.h>
 #include <stdbool.h>
+#include <stdlib.h>
 
 static uint64_t max(uint64_t a, uint64_t b)
 {
@@ -63,9 +64,12 @@ void generate_RSA_keys(uint64_t p, uint64_t q, uint64_t *n, uint64_t *e,
  */
 uint64_t RSA_trapdoor(uint64_t message, uint64_t key, uint64_t modulus)
 {
-	uint64_t r = 1;
+	if (message > modulus) {
+		perr("Message is greater than modulus\n");
+		exit(EXIT_FAILURE);
+	}
 
-	message = message % modulus;
+	uint64_t r = 1;
 	while (key > 0) {
 		if (key & 1) { /* Odd then multiply r by the current base */
 			r = (r * message) % modulus;
