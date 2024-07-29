@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
 #if 0
 	uint16_t crc = crc16_ccitt(message, len);
 #else
-	uint32_t crc = crc32_b(message, len);
+	uint32_t crc = crc32(message, len);
 #endif
 	printf("CRC\t\t: %u\n", crc);
 
