@@ -63,25 +63,15 @@ void generate_RSA_keys(uint64_t p, uint64_t q, uint64_t *n, uint64_t *e,
  */
 uint64_t RSA_trapdoor(uint64_t message, uint64_t key, uint64_t modulus)
 {
-	uint64_t mask = 0x80000000;
-	/* Skip the leading 0s */
-	for (size_t i = 0; i < sizeof(uint64_t) * 8; i++) {
-		if (key & mask) {
-			break;
+	uint64_t r = 1;
+
+	message = message % modulus;
+	while (key > 0) {
+		if (key & 1) { /* Odd then multiply r by the current base */
+			r = (r * message) % modulus;
 		}
-		mask >>= 1;
+		message = (message * message) % modulus; /* Square */
+		key >>= 1;
 	}
-
-	uint64_t C = 1;
-	while (mask) {
-		C = (C * C) % modulus; /* Square */
-
-		if (key & mask) {
-			C = (C * message) % modulus; /* Multiplication */
-		}
-
-		mask >>= 1; /* Next bit */
-	}
-
-	return C;
+	return r;
 }
