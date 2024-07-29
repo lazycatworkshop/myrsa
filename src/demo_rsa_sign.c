@@ -12,6 +12,7 @@
 #include <string.h>
 #include <getopt.h>
 #include "myrsa.h"
+#include "mycrc.h"
 
 /* Define the long options */
 static struct option long_options[] = {
