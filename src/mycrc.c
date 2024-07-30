@@ -78,21 +78,6 @@ uint16_t crc16_ccitt(const char *data, size_t len)
  * Return: The CRC-32 checksum of the data.
  */
 #define CRC32_POLY 0xEDB88320
-
-/**
- * crc32 - Calculate the CRC-32 checksum for a given buffer
- * @data: pointer to the data buffer
- * @len: length of the data buffer
- *
- * This function calculates the CRC-32 checksum for a given data buffer
- * using a precomputed table based on the polynomial 0xEDB88320, IEEE 802.3.
- * The function iterates over each byte of the data, updating the CRC value
- * using the table lookup method. The final CRC value is inverted before
- * being returned.
- *
- * Return: The CRC-32 checksum of the data.
- */
-#define CRC32_POLY 0xEDB88320
 #define CRC32_INIT 0xFFFFFFFF
 
 /* Precomputed CRC-32 table for polynomial 0xEDB88320 */
