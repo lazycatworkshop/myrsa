@@ -56,6 +56,11 @@ This will compile the source files and generate the executable files in the bin/
 ```bash
 ./bin/demo_rsa_verify --key <public_key> --modulus <modulus> --message-file <message_file> --signature <signature>
 ```
+### Convert a PEM file to a DER file
+```bash
+./bin/pem2der -p pemfile -d derfile
+```
+
 ## Acknowledgments
 
 This material is for educational purposes and not recommended for production use.
