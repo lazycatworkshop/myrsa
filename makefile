@@ -17,15 +17,17 @@ INC_DIR=include
 CCFLAG += -I$(INC_DIR)
 
 # Define executables and their specific source files
-EXECUTABLES=demo_rsa_keys demo_rsa_sign demo_rsa_verify
+EXECUTABLES=demo_rsa_keys demo_rsa_sign demo_rsa_verify pem2der
 demo_rsa_keys_SOURCES=$(SRC_DIR)/demo_rsa_keys.c $(SRC_DIR)/myrsa.c  $(SRC_DIR)/myrsa_math.c
 demo_rsa_sign_SOURCES=$(SRC_DIR)/demo_rsa_sign.c $(SRC_DIR)/myrsa.c $(SRC_DIR)/myrsa_math.c $(SRC_DIR)/mycrc.c
 demo_rsa_verify_SOURCES=$(SRC_DIR)/demo_rsa_verify.c $(SRC_DIR)/myrsa.c $(SRC_DIR)/myrsa_math.c $(SRC_DIR)/mycrc.c
+pem2der_SOURCES=$(SRC_DIR)/pem2der.c
 
 # Convert source files to object files for each executable
 demo_rsa_keys_OBJECTS=$(demo_rsa_keys_SOURCES:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 demo_rsa_sign_OBJECTS=$(demo_rsa_sign_SOURCES:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 demo_rsa_verify_OBJECTS=$(demo_rsa_verify_SOURCES:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
+pem2der_OBJECTS=$(pem2der_SOURCES:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 
 TEST_BINARIES=test_myrsa test_myrsa_math test_mycrc
 test_myrsa_SOURCES=$(SRC_DIR)/test_myrsa.c $(SRC_DIR)/myrsa.c $(SRC_DIR)/myrsa_math.c
@@ -51,6 +53,9 @@ demo_rsa_sign: $(demo_rsa_sign_OBJECTS)
 	$(CC) $^ -o $(BIN_DIR)/$@
 
 demo_rsa_verify: $(demo_rsa_verify_OBJECTS)
+	$(CC) $^ -o $(BIN_DIR)/$@
+
+pem2der: $(pem2der_OBJECTS)
 	$(CC) $^ -o $(BIN_DIR)/$@
 
 # Compile test sources into test binaries
