@@ -71,8 +71,7 @@ int main(int argc, char *argv[])
 	}
 
 	int c = getc(fp);
-	if (c == '-') {
-		// PEM format
+	if (c == '-') { /* Encapsulate Boundary in PEM */
 		fprintf(stderr, "Error: File is in PEM format\n");
 		ret = EXIT_FAILURE;
 		goto out;
@@ -84,7 +83,7 @@ int main(int argc, char *argv[])
 		int j = 0;
 		while ((c = getc(fp)) != EOF) {
 			if (j % 16 == 0)
-				printf("%04lu: ", ftell(fp) - 1);
+				printf("%04lx: ", ftell(fp) - 1);
 			printf("%02x ", c);
 			if (++j % 16 == 0)
 				printf("\n");
@@ -93,136 +92,96 @@ int main(int argc, char *argv[])
 		fseek(fp, 0, SEEK_SET);
 	}
 
-	/* Parser state machine */
-	enum {
-		STATE_TAG,
-		STATE_LENGTH,
-		STATE_CONTENT,
-		STATE_DONE
-	} state = STATE_TAG;
-
 	enum ASN1_TAG {
 		ASN1_TAG_INTEGER = 0x02,
 		ASN1_TAG_BIT_STRING = 0x03,
+		ASN1_TAG_OCTET_STRING = 0x04,
 		ASN1_TAG_NULL = 0x05,
 		ASN1_TAG_OBJECT_IDENTIFIER = 0x06,
 		ASN1_TAG_SEQUENCE = 0x30,
 		ASN1_TAG_UNKNOWN = 0xff
-	} tag = ASN1_TAG_UNKNOWN;
+	};
 
-	uint32_t is_rsa_public_key = 0;
-	while (1) {
-		uint8_t asn1_oid[128];
-		memset(asn1_oid, 0, sizeof(asn1_oid));
+	const uint8_t ans1_tag_constructive = 0x20;
 
-		switch (state) {
-		case STATE_TAG:
-			if ((c = getc(fp)) == EOF) {
-				state = STATE_DONE;
-				break;
-			}
-			tag = c;
-			state = STATE_LENGTH;
+	/* Parse the ASN.1 content */
+	uint8_t is_construct = 0;
+	while ((c = getc(fp)) != EOF) {
+		printf("%04lx: ", ftell(fp) - 1);
 
-			printf("%04lu: ", ftell(fp) - 1);
-			if (asn1_print_tag(tag) < 0) {
-				ret = EXIT_FAILURE;
-				goto out;
-			}
-			break;
-		case STATE_LENGTH:
-			c = getc(fp);
-			if (c == EOF) {
-				perror("Error: Unexpected EOF");
-				ret = EXIT_FAILURE;
-				goto out;
-			}
-
-			uint32_t len = 0;
-			if (c & 0x80) {
-				/* Long form */
-				int len = c & 0x7f;
-				if (len > 4) {
-					fprintf(stderr,
-						"Error: Length is too long\n");
-					ret = EXIT_FAILURE;
-					goto out;
-				}
-				len = 0;
-				for (int i = 0; i < len; i++) {
-					c = getc(fp);
-					len = (len << 8) | c;
-				}
-			} else {
-				/* Short form */
-				len = (uint8_t)c;
-			}
-			printf("L = %d\n", len);
-			state = STATE_CONTENT;
-			break;
-		case STATE_CONTENT:
-			switch (tag) {
-			case ASN1_TAG_NULL:
-			case ASN1_TAG_SEQUENCE:
-				/* Sequence type is constructive */
-				break;
-
-			case ASN1_TAG_OBJECT_IDENTIFIER:
-				printf("%04lu: ",
-				       ftell(fp)); /* First byte to be read */
-				/* OID */
-				for (int i = 0; i < len; i++) {
-					c = getc(fp);
-					printf("%02x ", c);
-					asn1_oid[i] = c;
-				}
-				printf("\n");
-
-				/* Look up OID */
-				int oid_type = asn1_lookup_oid(asn1_oid, len);
-				if (oid_type != OID_TYPE_UNKNOWN) {
-					print_oid(oid_type);
-				} else {
-					printf("OID: Unknown\n");
-				}
-
-				if (oid_type == OID_TYPE_RSA_ENCRYPTION)
-					is_rsa_public_key = 1;
-
-				break;
-
-			case ASN1_TAG_BIT_STRING:
-				/* Read unused bits */
-				c = getc(fp);
-				printf("%04lu: ", ftell(fp) - 1);
-				printf("Unused bits: %d\n", c);
-				len--;
-
-				if (is_rsa_public_key) { /* Make it constructive */
-					is_rsa_public_key = 0;
-					break;
-				}
-			default:
-				/* Read content */
-				for (int i = 0; i < len; i++) {
-					if (i % 16 == 0)
-						printf("%04lu: ", ftell(fp));
-					c = getc(fp);
-					printf("%02x ", c);
-					if ((i + 1) % 16 == 0)
-						printf("\n");
-				}
-				printf("\n");
-				break;
-			}
-			state = STATE_TAG;
-			break;
-
-		case STATE_DONE:
-			/* Done */
-			printf("Done\n");
+		/*  Identifier octets */
+		uint8_t tag = c;
+		if (asn1_print_tag(tag) < 0) {
+			fprintf(stderr, "Error: Unknown tag 0x%02x\n", tag);
+			ret = EXIT_FAILURE;
 			goto out;
 		}
+
+		/* Length octets */
+		int length = getc(fp);
+		if (length & 0x80) {
+			uint8_t length_bytes = length & 0x7f;
+			length = 0;
+			for (int i = 0; i < length_bytes; i++) {
+				length = (length << 8) | getc(fp);
+			}
+		}
+		printf("\tL = %d\n", length);
+		if (!length)
+			continue;
+
+		/* Content octets */
+		if (tag & ans1_tag_constructive) { /* Constructive */
+			continue;
+		}
+
+		if (tag == ASN1_TAG_OBJECT_IDENTIFIER) {
+			uint8_t oid_value[128];
+			for (int i = 0; i < length; i++) {
+				oid_value[i] = getc(fp);
+			}
+			int oid_type = asn1_lookup_oid(oid_value, length);
+			if (oid_type == OID_TYPE_UNKNOWN) {
+				printf("Unknown OID\n");
+			} else {
+				switch (oid_type) {
+				case OID_TYPE_RSA_ENCRYPTION:
+					is_construct = 1;
+					break;
+				default:
+					is_construct = 0;
+					break;
+				}
+				print_oid(oid_type);
+			}
+			continue;
+		}
+
+		if (tag == ASN1_TAG_BIT_STRING) {
+			uint8_t unused_bits = getc(fp);
+			printf("%04lx: ", ftell(fp) - 1);
+			printf("Unused bits: %d\n", unused_bits);
+			length--;
+
+			if (is_construct)
+				continue; /* Make it constructive */
+		}
+
+		if (tag == ASN1_TAG_OCTET_STRING) {
+			if (is_construct)
+				continue; /* Make it constructive */
+		}
+
+		/* General primitives */
+		for (int i = 0; i < length; i++) {
+			c = getc(fp);
+			if (i % 16 == 0)
+				printf("%04lx: ", ftell(fp) - 1);
+			printf("%02x ", c);
+			if (i % 16 == 15)
+				printf("\n");
+		}
+		printf("\n");
 	}
 
 out: /* Clean up */
@@ -246,6 +205,9 @@ int asn1_print_tag(uint8_t tag)
 	case 0x03:
 		printf("BIT STRING\t");
 		break;
+	case 0x04:
+		printf("OCTET STRING\t");
+		break;
 	case 0x05:
 		printf("NULL\t");
 		break;
@@ -256,7 +218,6 @@ int asn1_print_tag(uint8_t tag)
 		printf("SEQUENCE\t");
 		break;
 	default:
-		printf("Unknown tag %02x\n", tag);
 		ret = -1;
 		break;
 	}
