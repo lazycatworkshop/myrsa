@@ -1,2 +1,0 @@
-# RSA Application: Document Signing
-
