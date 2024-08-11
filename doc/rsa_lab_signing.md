@@ -22,17 +22,18 @@ Ask openssl to generate an RSA key at the length of 512 bits:
 
 ```console
 $ openssl genrsa -out private.key 512
-$ cat private.key 
+$ cat private.key
 -----BEGIN PRIVATE KEY-----
-MIIBVQIBADANBgkqhkiG9w0BAQEFAASCAT8wggE7AgEAAkEAtnE6K9zZ0mMyKsOz
-xOvlHZKm5wRoAL8VtAoCEx6MMuHxPX+jsBLJjh5TJNT42C6K6hi3+3USuaXWDD14
-4VWfPQIDAQABAkBPZwolSvJ2UXvlBtW3r99AtrHzO4S0RnYArJZokdP81IL4FN+j
-T8p9aLZMG0+qoNyNrp922p1imt19JRSxZHvVAiEA4AC0ikCugOehCdnZowdsz3HT
-e40JG6kXz+pFmVY9LkMCIQDQgL8A12SE2GYUO6ojdMGPZYmgOPJbmBQIMmfeDJjk
-fwIhAN/TNJMUkImTaVFbkeEaETqzRRsmUNyHuJhzQXo3NsjbAiB2BosYhNTnxj9y
-cJvM2ki/TXDse4/lfV7JjQ7yyRq7LQIhANd5OWATK4y5a4K1raqcfdy/1wVaIde6
-nadVGp64b2+x
+MIIBVAIBADANBgkqhkiG9w0BAQEFAASCAT4wggE6AgEAAkEAqPQBtfX+67xa1iEn
+w6o82NPe7bF28hphQii24AoMXvZ2RXl7opH4/nYX/J4KszLIqWljT9vRSbGk5us3
+mA99bwIDAQABAkBGrt7QW3ws734pO3HBYEVYiTsowif7HaI25YWssUd/qnrH2iLC
+kknVc6esith9Ha0g28BglkQ4bbwmGnzuXxhhAiEA0Re+WZg1o0kGOy+jIiAFKtyj
+V/oGjO64EmcUkK1yzBcCIQDO2wjZDnDCnfzD1Pe5bHwByx9Bp4Z0rUVh/HY/dIl4
+aQIgCtNA3qCbvk1sjinkN0MTIWn05vwh1LATRZiinu7r75cCIQCXKy8eIRV6xKZy
+HvMiyQse7GhdPKZgIjhwUWXBHdNQ8QIgPHcSThIwH3qCy0vk8O4913yZPBqFJgSy
+nhLyYSiOCbA=
 -----END PRIVATE KEY-----
+$ 
 ```
 
 This first and last line are encapsulation boundaries, EB, as defined in RFC934:
@@ -65,44 +66,44 @@ Uncover the embedded data:
 $ openssl rsa -text -in private_key.pem -noout
 Private-Key: (512 bit, 2 primes)
 modulus:
-    00:b6:71:3a:2b:dc:d9:d2:63:32:2a:c3:b3:c4:eb:
-    e5:1d:92:a6:e7:04:68:00:bf:15:b4:0a:02:13:1e:
-    8c:32:e1:f1:3d:7f:a3:b0:12:c9:8e:1e:53:24:d4:
-    f8:d8:2e:8a:ea:18:b7:fb:75:12:b9:a5:d6:0c:3d:
-    78:e1:55:9f:3d
+    00:a8:f4:01:b5:f5:fe:eb:bc:5a:d6:21:27:c3:aa:
+    3c:d8:d3:de:ed:b1:76:f2:1a:61:42:28:b6:e0:0a:
+    0c:5e:f6:76:45:79:7b:a2:91:f8:fe:76:17:fc:9e:
+    0a:b3:32:c8:a9:69:63:4f:db:d1:49:b1:a4:e6:eb:
+    37:98:0f:7d:6f
 publicExponent: 65537 (0x10001)
 privateExponent:
-    4f:67:0a:25:4a:f2:76:51:7b:e5:06:d5:b7:af:df:
-    40:b6:b1:f3:3b:84:b4:46:76:00:ac:96:68:91:d3:
-    fc:d4:82:f8:14:df:a3:4f:ca:7d:68:b6:4c:1b:4f:
-    aa:a0:dc:8d:ae:9f:76:da:9d:62:9a:dd:7d:25:14:
-    b1:64:7b:d5
+    46:ae:de:d0:5b:7c:2c:ef:7e:29:3b:71:c1:60:45:
+    58:89:3b:28:c2:27:fb:1d:a2:36:e5:85:ac:b1:47:
+    7f:aa:7a:c7:da:22:c2:92:49:d5:73:a7:ac:8a:d8:
+    7d:1d:ad:20:db:c0:60:96:44:38:6d:bc:26:1a:7c:
+    ee:5f:18:61
 prime1:
-    00:e0:00:b4:8a:40:ae:80:e7:a1:09:d9:d9:a3:07:
-    6c:cf:71:d3:7b:8d:09:1b:a9:17:cf:ea:45:99:56:
-    3d:2e:43
+    00:d1:17:be:59:98:35:a3:49:06:3b:2f:a3:22:20:
+    05:2a:dc:a3:57:fa:06:8c:ee:b8:12:67:14:90:ad:
+    72:cc:17
 prime2:
-    00:d0:80:bf:00:d7:64:84:d8:66:14:3b:aa:23:74:
-    c1:8f:65:89:a0:38:f2:5b:98:14:08:32:67:de:0c:
-    98:e4:7f
+    00:ce:db:08:d9:0e:70:c2:9d:fc:c3:d4:f7:b9:6c:
+    7c:01:cb:1f:41:a7:86:74:ad:45:61:fc:76:3f:74:
+    89:78:69
 exponent1:
-    00:df:d3:34:93:14:90:89:93:69:51:5b:91:e1:1a:
-    11:3a:b3:45:1b:26:50:dc:87:b8:98:73:41:7a:37:
-    36:c8:db
+    0a:d3:40:de:a0:9b:be:4d:6c:8e:29:e4:37:43:13:
+    21:69:f4:e6:fc:21:d4:b0:13:45:98:a2:9e:ee:eb:
+    ef:97
 exponent2:
-    76:06:8b:18:84:d4:e7:c6:3f:72:70:9b:cc:da:48:
-    bf:4d:70:ec:7b:8f:e5:7d:5e:c9:8d:0e:f2:c9:1a:
-    bb:2d
+    00:97:2b:2f:1e:21:15:7a:c4:a6:72:1e:f3:22:c9:
+    0b:1e:ec:68:5d:3c:a6:60:22:38:70:51:65:c1:1d:
+    d3:50:f1
 coefficient:
-    00:d7:79:39:60:13:2b:8c:b9:6b:82:b5:ad:aa:9c:
-    7d:dc:bf:d7:05:5a:21:d7:ba:9d:a7:55:1a:9e:b8:
-    6f:6f:b1
+    3c:77:12:4e:12:30:1f:7a:82:cb:4b:e4:f0:ee:3d:
+    d7:7c:99:3c:1a:85:26:04:b2:9e:12:f2:61:28:8e:
+    09:b0
 $ 
 ```
 
 The modulus has 65 bytes instead of 64 bytes for 512-bit key because the MSB is A2 in hex which has an 1 at the most significant bit and which presents a negative number. ANS.1 rules add a leading zero to avoid ambiguity.
 
-The publicExponent is 65537 which is commonly adapted in the industry, so we don't a separate step to generate a public key.
+The publicExponent is 65537 which is commonly adapted in the industry, so we don't need a separate step to generate a public key.
 
 The exponent1, exponent2, and coefficient are used in the Chinese Remainder Theorem (CRT) to optimize RSA decryption. openssl use CRT for its performance.
 
@@ -147,16 +148,16 @@ We do not sign the document, instead we sign only the particular hash:
 ```console
 $ openssl rsautl -sign -inkey private_key.pem -in msg.hash -out msg.sig
 The command rsautl was deprecated in version 3.0. Use 'pkeyutl' instead.
-$
 $ openssl pkeyutl -sign -inkey private_key.pem -in msg.hash -out msg.sig
 $ cat msg.sig
-??F?IV?$ ?C??x?D?E??Y???߬EC???h???hp?????G??????`
+?\x??&g\Xx?ݞ?ʳ9i??5I???z֡?kӼ[??sF|???]?g??Eiwq?"??Xd$ 
 $ hexdump -C msg.sig
-00000000  7a 35 46 bb 56 67 f9 2a  a4 04 f7 43 82 82 78 d6  |z5F.Vg.*...C..x.|
-00000010  44 ba 45 8b 89 59 be b3  d0 df ac 45 11 43 86 de  |D.E..Y.....E.C..|
-00000020  dc 68 f1 3f fc 68 70 b1  fb ad 83 a0 47 fc 89 cb  |.h.?.hp.....G...|
-00000030  c6 f5 e4 00 02 60 0d b0  86 46 d1 49 0e 11 56 ca  |.....`...F.I..V.|
+00000000  96 5c 78 cc 00 e8 26 67  5c 58 78 b5 dd 9e 9e ca  |.\x...&g\Xx.....|
+00000010  b3 39 17 69 c7 ef 91 35  49 3f ee c6 7a d6 a1 b1  |.9.i...5I?..z...|
+00000020  6b d3 bc 13 05 17 5b e0  cd 73 46 7c e8 13 bc 1d  |k.....[..sF|....|
+00000030  8b 5d ed 67 c3 e3 45 69  77 71 ad 22 cc e6 58 64  |.].g..Eiwq."..Xd|
 00000040
+$ 
 ```
 
 'rsautl' is not accept in newer versions of openssl.
@@ -173,39 +174,25 @@ $ openssl rsa -in private_key.pem -pubout -out public_key.pem
 writing RSA key
 $ cat public_key.pem 
 -----BEGIN PUBLIC KEY-----
-MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBALZxOivc2dJjMirDs8Tr5R2SpucEaAC/
-FbQKAhMejDLh8T1/o7ASyY4eUyTU+NguiuoYt/t1Erml1gw9eOFVnz0CAwEAAQ==
+MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAKj0AbX1/uu8WtYhJ8OqPNjT3u2xdvIa
+YUIotuAKDF72dkV5e6KR+P52F/yeCrMyyKlpY0/b0UmxpObrN5gPfW8CAwEAAQ==
 -----END PUBLIC KEY-----
+$ 
 ```
 
-When the other party receives this public key information, the user needs to convert it to its original binary form:
+When the other party receives this public key information, the user needs to convert it to its original binary form. The raw data is generated using ASN.1 syntax and is encoded by DER, Distinguished Encoding Rules.
 
 ```console
-$ openssl rsa -pubin -in public_key.pem -outform DER -out public_key.der
+$ openssl rsa -pubout -in private_key.pem -outform DER -out public_key.der
 writing RSA key
 $ hexdump -C public_key.der
 00000000  30 5c 30 0d 06 09 2a 86  48 86 f7 0d 01 01 01 05  |0\0...*.H.......|
-00000010  00 03 4b 00 30 48 02 41  00 b6 71 3a 2b dc d9 d2  |..K.0H.A..q:+...|
-00000020  63 32 2a c3 b3 c4 eb e5  1d 92 a6 e7 04 68 00 bf  |c2*..........h..|
-00000030  15 b4 0a 02 13 1e 8c 32  e1 f1 3d 7f a3 b0 12 c9  |.......2..=.....|
-00000040  8e 1e 53 24 d4 f8 d8 2e  8a ea 18 b7 fb 75 12 b9  |..S$.........u..|
-00000050  a5 d6 0c 3d 78 e1 55 9f  3d 02 03 01 00 01        |...=x.U.=.....|
+00000010  00 03 4b 00 30 48 02 41  00 a8 f4 01 b5 f5 fe eb  |..K.0H.A........|
+00000020  bc 5a d6 21 27 c3 aa 3c  d8 d3 de ed b1 76 f2 1a  |.Z.!'..<.....v..|
+00000030  61 42 28 b6 e0 0a 0c 5e  f6 76 45 79 7b a2 91 f8  |aB(....^.vEy{...|
+00000040  fe 76 17 fc 9e 0a b3 32  c8 a9 69 63 4f db d1 49  |.v.....2..icO..I|
+00000050  b1 a4 e6 eb 37 98 0f 7d  6f 02 03 01 00 01        |....7..}o.....|
 0000005e
-$ 
-```
-The raw data is generated using ASN.1 syntax and is encoded by DER, Distinguished Encoding Rules. According to X.509 (2019):
-
-```plaintext
-SubjectPublicKeyInfo ::= SEQUENCE {
-algorithm AlgorithmIdentifier{{SupportedAlgorithms}},
-subjectPublicKey BIT STRING,
-... }
-```
-The first byte is 30h which is the identifier octet, SEQUENCE, which and the second byte is 5ch(92) which is the length octet.
-
-openssl can parse the public key in ASN.1 structure:  
-
-```console
 $ openssl asn1parse -inform DER -in public_key.der
     0:d=0  hl=2 l=  92 cons: SEQUENCE          
     2:d=1  hl=2 l=  13 cons: SEQUENCE          
@@ -214,30 +201,26 @@ $ openssl asn1parse -inform DER -in public_key.der
    17:d=1  hl=2 l=  75 prim: BIT STRING        
 $ 
 ```
-The algorithm is rsaEncryption. Unfortunately, openssl does not display the BIT STRING data. This project has a program for it:
 
+The first byte is 30h which is the identifier octet, SEQUENCE, which and the second byte is 5ch(92) which is the length octet.
+
+According to X.509 (2019):
+
+```plaintext
+SubjectPublicKeyInfo ::= SEQUENCE {
+algorithm AlgorithmIdentifier{{SupportedAlgorithms}},
+subjectPublicKey BIT STRING,
+... }
+
+AlgorithmIdentifier{ALGORITHM:SupportedAlgorithms} ::= SEQUENCE {
+algorithm ALGORITHM.&id({SupportedAlgorithms}),
+parameters ALGORITHM.&Type({SupportedAlgorithms}{@algorithm}) OPTIONAL,
+... }
+
+The algorithm component shall be an object identifier that uniquely identifies the cryptographic algorithm being defined.
+The parameters component, when present, shall specify the parameters associated with the algorithm. Some, but not all algorithms require associated parameters.
 ```
-$ ./asn1parse -f public_key.der
-0000: SEQUENCE	L = 92
-0002: SEQUENCE	L = 13
-0004: OBJECT IDENTIFIER	L = 9
-0006: 2a 86 48 86 f7 0d 01 01 01 
-OID: 1 2 840 113549 1 1 1  (rsaEncryption)
-0015: NULL	L = 0
-0017: BIT STRING	L = 75
-0019: Unused bits: 0
-0020: SEQUENCE	L = 72
-0022: INTEGER	L = 65
-0024: 00 b6 71 3a 2b dc d9 d2 63 32 2a c3 b3 c4 eb e5 
-0040: 1d 92 a6 e7 04 68 00 bf 15 b4 0a 02 13 1e 8c 32 
-0056: e1 f1 3d 7f a3 b0 12 c9 8e 1e 53 24 d4 f8 d8 2e 
-0072: 8a ea 18 b7 fb 75 12 b9 a5 d6 0c 3d 78 e1 55 9f 
-0088: 3d 
-0089: INTEGER	L = 3
-0091: 01 00 01 
-Done
-$ 
-```
+openssl ASN.1 parser find the SupportedAlgorithm is rsaEncryption. What is the subjectPublicKey?
 
 PKCK #1's definition for the public key:
 
@@ -251,17 +234,56 @@ A.1.1.  RSA Public Key Syntax
              modulus           INTEGER,  -- n
              publicExponent    INTEGER   -- 
 ```
-So we know the first integer is the modulus while the second one is the public exponent, 65537. We can confirm this by openssl:
+
+We should have one integer for modulus and another integer for the public exponent. Unfortunately openssl ASN.1 parser does not display the BIT STRING data. This project has a program for it:
 
 ```
-$ openssl rsa -pubin -inform DER -in public_key.der -text -noout
+$ ./asn1parse -f public_key.der
+0000: SEQUENCE	L =   92
+0002: 	SEQUENCE	L =   13
+0004: 		OBJECT IDENTIFIER	L =    9
+0015: 		NULL	L =    0
+0017: 	BIT STRING	L =   75
+0020: 		SEQUENCE	L =   72
+0022: 			INTEGER	L =   65
+0089: 			INTEGER	L =    3
+$ 
+```
+
+To break down further:
+
+```console
+$ ./asn1parse -f public_key.der -v
+0000: SEQUENCE	L =   92
+0002: 	SEQUENCE	L =   13
+0004: 		OBJECT IDENTIFIER	L =    9
+OID: 1 2 840 113549 1 1 1  (rsaEncryption)
+0015: 		NULL	L =    0
+0017: 	BIT STRING	L =   75
+0019:  0 - Unused bits
+0020: 		SEQUENCE	L =   72
+0022: 			INTEGER	L =   65
+0024: 00 a8 f4 01 b5 f5 fe eb bc 5a d6 21 27 c3 aa 3c 
+0040: d8 d3 de ed b1 76 f2 1a 61 42 28 b6 e0 0a 0c 5e 
+0056: f6 76 45 79 7b a2 91 f8 fe 76 17 fc 9e 0a b3 32 
+0072: c8 a9 69 63 4f db d1 49 b1 a4 e6 eb 37 98 0f 7d 
+0088: 6f 
+0089: 			INTEGER	L =    3
+0091: 01 00 01 
+$ 
+```
+
+We can use openssl to extract the public key in text:
+
+```
+$ openssl rsa -text -pubin -inform DER -in public_key.der -noout
 Public-Key: (512 bit)
 Modulus:
-    00:b6:71:3a:2b:dc:d9:d2:63:32:2a:c3:b3:c4:eb:
-    e5:1d:92:a6:e7:04:68:00:bf:15:b4:0a:02:13:1e:
-    8c:32:e1:f1:3d:7f:a3:b0:12:c9:8e:1e:53:24:d4:
-    f8:d8:2e:8a:ea:18:b7:fb:75:12:b9:a5:d6:0c:3d:
-    78:e1:55:9f:3d
+    00:a8:f4:01:b5:f5:fe:eb:bc:5a:d6:21:27:c3:aa:
+    3c:d8:d3:de:ed:b1:76:f2:1a:61:42:28:b6:e0:0a:
+    0c:5e:f6:76:45:79:7b:a2:91:f8:fe:76:17:fc:9e:
+    0a:b3:32:c8:a9:69:63:4f:db:d1:49:b1:a4:e6:eb:
+    37:98:0f:7d:6f
 Exponent: 65537 (0x10001)
 $ 
 ```
@@ -269,12 +291,12 @@ $
 ### Calculate the hash
 Given the document, the recipient calculates the hash using the same algorithm:
 ```
-$ openssl dgst -sha256 -binary -out msg.hash.1 msg.txt 
+$ openssl dgst -sha256 -binary -out msg.hash.1 msg.txt
 $ 
 ```
 
 ### Verify the signature
-Then newly calculated hash and the received signature to the utility to verify authenticity:
+Then the recipient takes the sender's public key information, newly calculated hash and the received signature to the utility to verify authenticity:
 
 ```console
 $ openssl pkeyutl -verify -pubin -inkey public_key.pem -in msg.hash.1 -sigfile msg.sig
@@ -288,9 +310,10 @@ If the recipient obtain a different document:
 $ echo Hello, world! > msg1.txt
 $ cat msg1.txt
 Hello, world!
+$ 
 ```
 
-The check will fail because the different document, no matter how subtle is the change, generates a dissimilar hash:
+The check will fail because the different document, no matter how subtle the change is, generates a dissimilar hash:
 ```
 $ openssl dgst -sha256 -binary -out msg.hash.2 msg1.txt
 $ hexdump -C msg.hash.2
