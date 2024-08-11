@@ -18,7 +18,7 @@ openssl version
 
 ## Generate a private key
 
-Ask openssl to generate an RSA key at the length of 512 bits:
+First we ask openssl to generate an RSA private key at the length of 512 bits which is the shortest one allowed by openssl and that short key is not recommended in real applications:
 
 ```console
 $ openssl genrsa -out private.key 512
@@ -60,7 +60,7 @@ mv private.key private_key.pem
 
 ### What is in the key file?
 
-Uncover the embedded data:
+Use 'rsa -text' to print the key in text:
 
 ```console
 $ openssl rsa -text -in private_key.pem -noout
@@ -112,6 +112,8 @@ The exponent1, exponent2, and coefficient are used in the Chinese Remainder Theo
 ### Create a hash of the document
 A unique characteristic provides the proof of the document integrity as we mention in another article in which we use a checksum, CRC-32. But CRC-32 checksum is not a strong one, therefore we usually use a more sophisticate method like a Secure Hash Algorithm. Here we choose SHA-256 which will be less than the 512-bit modulus.
 
+Use 'dgst -sha256' for the hash:
+
 ```console
 $ echo Hello world! > msg.txt
 $ cat msg.txt
@@ -160,14 +162,15 @@ $ hexdump -C msg.sig
 $ 
 ```
 
-'rsautl' is not accept in newer versions of openssl.
-'pkeyutl' takes only the binary hash file and generates only the binary output for signature. We have a 512-bit private key, means 512-bit modulus, hence the 512-bit (64 bytes) of signature.
+'rsautl' command is not accept in newer versions of openssl, so we go with 'pkeyutl -sign' as prompted.
+
+'pkeyutl' command takes only the binary hash file and generates only the binary output for signature. We have a 512-bit private key, means 512-bit modulus, hence the 512-bit (64 bytes) of signature.
 
 ## Verify the document
 
 ### Prepare the public key
 
-Private keys shall not leave the safe enclaves, therefore we extract the public key information for the recipients:
+Private keys shall not leave the safe enclaves, therefore we extract the public key information for the recipients with 'rsa -pubout':
 
 ```console
 $ openssl rsa -in private_key.pem -pubout -out public_key.pem
@@ -180,7 +183,7 @@ YUIotuAKDF72dkV5e6KR+P52F/yeCrMyyKlpY0/b0UmxpObrN5gPfW8CAwEAAQ==
 $ 
 ```
 
-When the other party receives this public key information, the user needs to convert it to its original binary form. The raw data is generated using ASN.1 syntax and is encoded by DER, Distinguished Encoding Rules.
+The PEM file start and end with the text '-----BEGIN PUBLIC KEY-----' and '-----END PUBLIC KEY-----' which identify the purpose of the file. When the other party receives this public key information, from the document sender or a public database, the user needs to convert it to its original binary form. The raw data is generated using ASN.1 syntax and is encoded by DER, Distinguished Encoding Rules. We also use 'rsa -pubout' and add a designator '-outform' to specify the DER format:
 
 ```console
 $ openssl rsa -pubout -in private_key.pem -outform DER -out public_key.der
@@ -220,7 +223,7 @@ parameters ALGORITHM.&Type({SupportedAlgorithms}{@algorithm}) OPTIONAL,
 The algorithm component shall be an object identifier that uniquely identifies the cryptographic algorithm being defined.
 The parameters component, when present, shall specify the parameters associated with the algorithm. Some, but not all algorithms require associated parameters.
 ```
-openssl ASN.1 parser find the SupportedAlgorithm is rsaEncryption. What is the subjectPublicKey?
+openssl ASN.1 parser finds the SupportedAlgorithm is rsaEncryption. What is the subjectPublicKey?
 
 PKCK #1's definition for the public key:
 
@@ -235,7 +238,7 @@ A.1.1.  RSA Public Key Syntax
              publicExponent    INTEGER   -- 
 ```
 
-We should have one integer for modulus and another integer for the public exponent. Unfortunately openssl ASN.1 parser does not display the BIT STRING data. This project has a program for it:
+We should have the BIT STRING wrapped in a SEQUENCE containing one integer for modulus and another integer for the public exponent. Unfortunately openssl ASN.1 parser does not display the BIT STRING data. This project has a program for it:
 
 ```
 $ ./asn1parse -f public_key.der
@@ -273,7 +276,7 @@ OID: 1 2 840 113549 1 1 1  (rsaEncryption)
 $ 
 ```
 
-We can use openssl to extract the public key in text:
+Similar to what we did previously for the private key, We can use '-text -pubin' to extract the public key in text:
 
 ```
 $ openssl rsa -text -pubin -inform DER -in public_key.der -noout
@@ -289,14 +292,15 @@ $
 ```
 
 ### Calculate the hash
-Given the document, the recipient calculates the hash using the same algorithm:
+The recipient calculates the hash using the same algorithm against the receive document:
+
 ```
 $ openssl dgst -sha256 -binary -out msg.hash.1 msg.txt
 $ 
 ```
 
 ### Verify the signature
-Then the recipient takes the sender's public key information, newly calculated hash and the received signature to the utility to verify authenticity:
+Then the recipient takes the sender's public key information, newly calculated hash and the received signature to the utility to verify authenticity with 'pkeyutl' command with '-verify' option:
 
 ```console
 $ openssl pkeyutl -verify -pubin -inkey public_key.pem -in msg.hash.1 -sigfile msg.sig
@@ -305,7 +309,7 @@ $
 ```
 
 ### When the file is altered
-If the recipient obtain a different document:
+If the recipient obtains a different document:
 ```console
 $ echo Hello, world! > msg1.txt
 $ cat msg1.txt
