@@ -22,9 +22,13 @@ enum OID_TYPE {
 	OID_TYPE_UNKNOWN = 0xff
 };
 
-int asn1_print_tag(uint8_t tag);
+const char *asn1_print_tag(uint8_t tag);
 int asn1_lookup_oid(uint8_t asn1_oid_value[], uint8_t asn1_oid_len);
 void print_oid(int oid_type);
+void print_indent();
+void level_inc(uint32_t len);
+void level_len_inc(uint32_t len);
+void level_len_dec(uint32_t len);
 
 int main(int argc, char *argv[])
 {
@@ -107,33 +111,42 @@ int main(int argc, char *argv[])
 	/* Parse the ASN.1 content */
 	uint8_t is_construct = 0;
 	while ((c = getc(fp)) != EOF) {
+		uint8_t length_bytes = 0;
+		int length = 0;
+		level_inc(1);
 		printf("%04lx: ", ftell(fp) - 1);
 
 		/*  Identifier octets */
 		uint8_t tag = c;
-		if (asn1_print_tag(tag) < 0) {
+		if (verbose_level > VERBOSE_LEVEL_INFO)
+			printf("Tag: %02x ", tag);
+		if (!asn1_print_tag(tag)) {
 			fprintf(stderr, "Error: Unknown tag 0x%02x\n", tag);
 			ret = EXIT_FAILURE;
 			goto out;
 		}
 
 		/* Length octets */
-		int length = getc(fp);
+		length = getc(fp);
 		if (length & 0x80) {
-			uint8_t length_bytes = length & 0x7f;
+			length_bytes = length & 0x7f;
 			length = 0;
 			for (int i = 0; i < length_bytes; i++) {
 				length = (length << 8) | getc(fp);
 			}
 		}
-		printf("\tL = %d\n", length);
+		level_len_inc(length_bytes + 1);
+		level_len_inc(length);
+		print_indent();
+		printf("%s\t", asn1_print_tag(tag));
+		printf("L = %d\n", length);
 		if (!length)
-			continue;
+			goto next_primitive;
+
+		if (tag & ans1_tag_constructive)
+			goto next_constructive;
 
 		/* Content octets */
-		if (tag & ans1_tag_constructive) { /* Constructive */
-			continue;
-		}
 
 		if (tag == ASN1_TAG_OBJECT_IDENTIFIER) {
 			uint8_t oid_value[128];
@@ -154,7 +167,7 @@ int main(int argc, char *argv[])
 				}
 				print_oid(oid_type);
 			}
-			continue;
+			goto next_primitive;
 		}
 
 		if (tag == ASN1_TAG_BIT_STRING) {
@@ -162,27 +175,36 @@ int main(int argc, char *argv[])
 			printf("%04lx: ", ftell(fp) - 1);
 			printf("Unused bits: %d\n", unused_bits);
 			length--;
+			level_len_dec(1);
 
 			if (is_construct)
-				continue; /* Make it constructive */
+				goto next_constructive;
 		}
 
 		if (tag == ASN1_TAG_OCTET_STRING) {
 			if (is_construct)
-				continue; /* Make it constructive */
+				goto next_constructive;
 		}
 
 		/* General primitives */
 		for (int i = 0; i < length; i++) {
 			c = getc(fp);
-			if (i % 16 == 0)
-				printf("%04lx: ", ftell(fp) - 1);
-			printf("%02x ", c);
-			if (i % 16 == 15)
-				printf("\n");
+			if (verbose_level >= VERBOSE_LEVEL_INFO) {
+				if (i % 16 == 0)
+					printf("%04lx: ", ftell(fp) - 1);
+				printf("%02x ", c);
+				if (i % 16 == 15)
+					printf("\n");
+			}
 		}
-		if (length % 16)
+		if ((verbose_level >= VERBOSE_LEVEL_INFO) && (length % 16))
 			printf("\n");
+
+next_primitive:
+		level_len_dec(length); /* Content octets */
+next_constructive:
+		level_len_dec(length_bytes + 1); /* Length octets */
+		level_len_dec(1); /* Identifier octets */
 	}
 
 out: /* Clean up */
@@ -193,33 +215,31 @@ out: /* Clean up */
 	return ret;
 }
 
-int asn1_print_tag(uint8_t tag)
+const char *asn1_print_tag(uint8_t tag)
 {
-	int ret = 0;
+	const char *ret = NULL;
 
-	if (verbose_level >= VERBOSE_LEVEL_INFO)
-		printf("Tag: %02x\t", tag);
 	switch (tag) {
 	case 0x02:
-		printf("INTEGER\t");
+		ret = "INTEGER";
 		break;
 	case 0x03:
-		printf("BIT STRING\t");
+		ret = "BIT STRING";
 		break;
 	case 0x04:
-		printf("OCTET STRING\t");
+		ret = "OCTET STRING";
 		break;
 	case 0x05:
-		printf("NULL\t");
+		ret = "NULL";
 		break;
 	case 0x06:
-		printf("OBJECT IDENTIFIER\t");
+		ret = "OBJECT IDENTIFIER";
 		break;
 	case 0x30:
-		printf("SEQUENCE\t");
+		ret = "SEQUENCE";
 		break;
 	default:
-		ret = -1;
+		ret = NULL;
 		break;
 	}
 
@@ -305,4 +325,41 @@ void print_oid(int oid_type)
 	for (int i = 0; i < oid_database[oid_type].oid_len; i++)
 		printf("%d ", oid_database[oid_type].oid_value[i]);
 	printf(" (%s)\n", oid_database[oid_type].description);
+}
+
+char indent_str[128] = { 0 };
+char *indent = &indent_str[1];
+int indent_level = -1;
+uint32_t level_len[128] = { 0 };
+
+void print_indent(uint32_t level)
+{
+	printf("%s", indent);
+}
+
+void level_inc(uint32_t len)
+{
+	indent_level++;
+	indent_str[indent_level] = '\t';
+	level_len[indent_level] = len;
+}
+
+void level_dec()
+{
+	indent_str[indent_level] = 0;
+	indent_level--;
+}
+
+void level_len_inc(uint32_t len)
+{
+	level_len[indent_level] += len;
+}
+
+void level_len_dec(uint32_t len)
+{
+	for (int i = indent_level; i > 0; i--) {
+		level_len[i] -= len;
+		if (level_len[i] == 0)
+			level_dec();
+	};
 }
