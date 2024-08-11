@@ -164,7 +164,7 @@ $
 
 'rsautl' command is not accept in newer versions of openssl, so we go with 'pkeyutl -sign' as prompted.
 
-'pkeyutl' command takes only the binary hash file and generates only the binary output for signature. We have a 512-bit private key, means 512-bit modulus, hence the 512-bit (64 bytes) of signature.
+'pkeyutl -sign' signs any file as a whole so we use the binary hash file and generates the binary signature. We have a 512-bit private key, means 512-bit modulus, hence the 512-bit (64 bytes) of signature.
 
 ## Verify the document
 
