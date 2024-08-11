@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
 		int j = 0;
 		while ((c = getc(fp)) != EOF) {
 			if (j % 16 == 0)
-				printf("%04lx: ", ftell(fp) - 1);
+				printf("%04ld: ", ftell(fp) - 1);
 			printf("%02x ", c);
 			if (++j % 16 == 0)
 				printf("\n");
@@ -114,7 +114,7 @@ int main(int argc, char *argv[])
 		uint8_t length_bytes = 0;
 		int length = 0;
 		level_inc(1);
-		printf("%04lx: ", ftell(fp) - 1);
+		printf("%04ld: ", ftell(fp) - 1);
 
 		/*  Identifier octets */
 		uint8_t tag = c;
@@ -172,7 +172,7 @@ int main(int argc, char *argv[])
 
 		if (tag == ASN1_TAG_BIT_STRING) {
 			uint8_t unused_bits = getc(fp);
-			printf("%04lx: ", ftell(fp) - 1);
+			printf("%04ld: ", ftell(fp) - 1);
 			printf("Unused bits: %d\n", unused_bits);
 			length--;
 			level_len_dec(1);
@@ -191,7 +191,7 @@ int main(int argc, char *argv[])
 			c = getc(fp);
 			if (verbose_level >= VERBOSE_LEVEL_INFO) {
 				if (i % 16 == 0)
-					printf("%04lx: ", ftell(fp) - 1);
+					printf("%04ld: ", ftell(fp) - 1);
 				printf("%02x ", c);
 				if (i % 16 == 15)
 					printf("\n");
