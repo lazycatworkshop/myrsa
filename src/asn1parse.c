@@ -25,7 +25,7 @@ enum OID_TYPE {
 const char *asn1_print_tag(uint8_t tag);
 int asn1_lookup_oid(uint8_t asn1_oid_value[], uint8_t asn1_oid_len);
 void print_oid(int oid_type);
-void print_indent();
+void print_indent(void);
 void level_inc(uint32_t len);
 void level_len_inc(uint32_t len);
 void level_len_dec(uint32_t len);
@@ -139,7 +139,7 @@ int main(int argc, char *argv[])
 		level_len_inc(length);
 		print_indent();
 		printf("%s\t", asn1_print_tag(tag));
-		printf("L = %d\n", length);
+		printf("L = %4d\n", length);
 		if (!length)
 			goto next_primitive;
 
@@ -165,15 +165,18 @@ int main(int argc, char *argv[])
 					is_construct = 0;
 					break;
 				}
-				print_oid(oid_type);
+				if (verbose_level >= VERBOSE_LEVEL_INFO)
+					print_oid(oid_type);
 			}
 			goto next_primitive;
 		}
 
 		if (tag == ASN1_TAG_BIT_STRING) {
 			uint8_t unused_bits = getc(fp);
-			printf("%04ld: ", ftell(fp) - 1);
-			printf("Unused bits: %d\n", unused_bits);
+			if (verbose_level >= VERBOSE_LEVEL_INFO) {
+				printf("%04ld: ", ftell(fp) - 1);
+				printf("%2d - Unused bits\n", unused_bits);
+			}
 			length--;
 			level_len_dec(1);
 
@@ -332,7 +335,7 @@ char *indent = &indent_str[1];
 int indent_level = -1;
 uint32_t level_len[128] = { 0 };
 
-void print_indent(uint32_t level)
+void print_indent(void)
 {
 	printf("%s", indent);
 }
