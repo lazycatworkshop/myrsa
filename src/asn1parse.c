@@ -181,7 +181,8 @@ int main(int argc, char *argv[])
 			if (i % 16 == 15)
 				printf("\n");
 		}
-		printf("\n");
+		if (length % 16)
+			printf("\n");
 	}
 
 out: /* Clean up */
