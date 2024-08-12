@@ -14,17 +14,36 @@ enum {
 } verbose_level = VERBOSE_LEVEL_NONE;
 
 enum OID_TYPE {
-	OID_TYPE_RSA,
+	OID_TYPE_RSA = 0,
+	OID_TYPE_EC_PUBLIC_KEY,
+	OID_TYPE_PRIME256V1,
+	OID_TYPE_ECDSA_WITH_SHA256,
 	OID_TYPE_RSA_ENCRYPTION,
 	OID_TYPE_SHA256_WITH_RSA_ENCRYPTION,
+	OID_TYPE_CT_PRECERT_SCTS,
+	OID_TYPE_OBJECT_CLASS,
+	OID_TYPE_COMMON_NAME,
+	OID_TYPE_ORGANIZATION_NAME,
+	OID_TYPE_X509V3_EXTENDED_KEY_USAGE,
+	OID_TYPE_KEY_USAGE,
+	OID_TYPE_SUBJECT_ALT_NAME,
+	OID_TYPE_BASIC_CONSTRAINTS,
+	OID_TYPE_CRL_DISTRIBUTION_POINTS,
+	OID_TYPE_CERTIFICATE_POLICIES,
+	OID_TYPE_AUTHORITY_KEY_IDENTIFIER,
+	OID_TYPE_COUNTRY_NAME,
+	OID_TYPE_EXT_KEY_USAGE,
 	/* Add more OIDs as needed */
 
-	OID_TYPE_UNKNOWN = 0xff
+	OID_TYPE_UNKNOWN
 };
 
 const char *asn1_print_tag(uint8_t tag);
-int asn1_lookup_oid(uint8_t asn1_oid_value[], uint8_t asn1_oid_len);
-void print_oid(int oid_type);
+void decode_asn1_oid(uint8_t asn1_oid_value[], uint8_t asn1_oid_len,
+		     uint32_t oid_value[], uint32_t *oid_len);
+int asn1_lookup_oid(uint32_t asn1_oid_value[], uint32_t asn1_oid_len);
+void print_oid(uint32_t oid_value[], uint32_t oid_len);
+void print_oid_desc(int oid_type);
 void print_indent(void);
 void level_inc(uint32_t len);
 void level_len_inc(uint32_t len);
@@ -97,12 +116,22 @@ int main(int argc, char *argv[])
 	}
 
 	enum ASN1_TAG {
+		ASN1_TAG_EOC = 0x00,
+		ASN1_TAG_BOOLEAN = 0x01,
 		ASN1_TAG_INTEGER = 0x02,
 		ASN1_TAG_BIT_STRING = 0x03,
 		ASN1_TAG_OCTET_STRING = 0x04,
 		ASN1_TAG_NULL = 0x05,
 		ASN1_TAG_OBJECT_IDENTIFIER = 0x06,
+		ASN1_TAG_UTF8_STRING = 0x0c,
+		ASN1_TAG_PRINTABLE_STRING = 0x13,
+		ASN1_TAG_UTC = 0x17,
 		ASN1_TAG_SEQUENCE = 0x30,
+		ASN1_TAG_SET = 0x31,
+		ASN1_TAG_CONTEXT_SPECIFIC_0 = 0xa0,
+		ASN1_TAG_CONTEXT_SPECIFIC_3 = 0xa3,
+		ASN1_TAG_CONTEXT_SPECIFIC_4 = 0xa4,
+		/* Add more tags here */
 		ASN1_TAG_UNKNOWN = 0xff
 	};
 
@@ -149,25 +178,30 @@ int main(int argc, char *argv[])
 		/* Content octets */
 
 		if (tag == ASN1_TAG_OBJECT_IDENTIFIER) {
-			uint8_t oid_value[128];
+			uint8_t asn1_oid_value[128];
 			for (int i = 0; i < length; i++) {
-				oid_value[i] = getc(fp);
+				asn1_oid_value[i] = getc(fp);
 			}
-			int oid_type = asn1_lookup_oid(oid_value, length);
-			if (oid_type == OID_TYPE_UNKNOWN) {
-				printf("Unknown OID\n");
-			} else {
-				switch (oid_type) {
-				case OID_TYPE_RSA_ENCRYPTION:
-					is_construct = 1;
-					break;
-				default:
-					is_construct = 0;
-					break;
-				}
-				if (verbose_level >= VERBOSE_LEVEL_INFO)
-					print_oid(oid_type);
+			uint32_t oid_len = 0;
+			uint32_t oid_value[128];
+
+			decode_asn1_oid(asn1_oid_value, length, oid_value,
+					&oid_len);
+			int oid_type = asn1_lookup_oid(oid_value, oid_len);
+
+			switch (oid_type) {
+			case OID_TYPE_RSA_ENCRYPTION:
+				is_construct = 1;
+				break;
+			default:
+				is_construct = 0;
+				break;
 			}
+			if (verbose_level >= VERBOSE_LEVEL_INFO) {
+				print_oid(oid_value, oid_len);
+				print_oid_desc(oid_type);
+			}
+
 			goto next_primitive;
 		}
 
@@ -223,6 +257,12 @@ const char *asn1_print_tag(uint8_t tag)
 	const char *ret = NULL;
 
 	switch (tag) {
+	case 0x00:
+		ret = "EOC";
+		break;
+	case 0x01:
+		ret = "BOOLEAN";
+		break;
 	case 0x02:
 		ret = "INTEGER";
 		break;
@@ -238,8 +278,29 @@ const char *asn1_print_tag(uint8_t tag)
 	case 0x06:
 		ret = "OBJECT IDENTIFIER";
 		break;
+	case 0x0c:
+		ret = "UTF8 STRING";
+		break;
+	case 0x13:
+		ret = "PRINTABLE STRING";
+		break;
+	case 0x17:
+		ret = "UTC TIME";
+		break;
 	case 0x30:
 		ret = "SEQUENCE";
+		break;
+	case 0xa0:
+		ret = "CONTEXT SPECIFIC 0";
+		break;
+	case 0xa3:
+		ret = "CONTEXT SPECIFIC 3";
+		break;
+	case 0xa4:
+		ret = "CONTEXT SPECIFIC 4";
+		break;
+	case 0x31:
+		ret = "SET";
 		break;
 	default:
 		ret = NULL;
@@ -259,9 +320,28 @@ OID oid_database[] = {
 	{ .oid_len = 4,
 	  .oid_value = { 1, 2, 840, 113549 },
 	  .description = "RSA" },
+	{ 6, { 1, 2, 840, 10045, 2, 1 }, "ecPublicKey" },
+	{ 7, { 1, 2, 840, 10045, 3, 1, 7 }, "prime256v1" },
+	{ 7, { 1, 2, 840, 10045, 4, 3, 2 }, "ecdsa-with-SHA256" },
 	{ 7, { 1, 2, 840, 113549, 1, 1, 1 }, "rsaEncryption" },
-	{ 7, { 1, 2, 840, 113549, 1, 1, 11 }, "sha256withRSAEncryption" }
+	{ 7, { 1, 2, 840, 113549, 1, 1, 11 }, "sha256withRSAEncryption" },
+	{ 10, { 1, 3, 6, 1, 4, 1, 11129, 2, 4, 2 }, "ct_precert_scts" },
+	{ 4, { 2, 5, 4, 0 }, "objectClass" },
+	{ 4, { 2, 5, 4, 3 }, "commonName" },
+	{ 4, { 2, 5, 4, 6 }, "countryName" },
+	{ 4, { 2, 5, 4, 10 }, "organizationName" },
+	{ 4, { 2, 5, 29, 14 }, "x509v3ExtendedKeyUsage" },
+	{ 4, { 2, 5, 29, 15 }, "keyUsage" },
+	{ 4, { 2, 5, 29, 17 }, "subjectAltName" },
+	{ 4, { 2, 5, 29, 19 }, "basicConstraints" },
+	{ 4, { 2, 5, 29, 31 }, "cRLDistributionPoints" },
+	{ 4, { 2, 5, 29, 32 }, "certificatePolicies" },
+	{ 4, { 2, 5, 29, 35 }, "authorityKeyIdentifier" },
+	{ 4, { 2, 5, 29, 37 }, "extKeyUsage" },
+
 	/* Add more OIDs as needed */
+	{ 0, { 0 }, "Unknown OID" }
+
 };
 
 /**
@@ -305,13 +385,8 @@ void decode_asn1_oid(uint8_t asn1_oid_value[], uint8_t asn1_oid_len,
  *
  * Return: The index of the OID in the OID database if found, otherwise -1.
  */
-int asn1_lookup_oid(uint8_t asn1_oid_value[], uint8_t asn1_oid_len)
+int asn1_lookup_oid(uint32_t oid_value[], uint32_t oid_len)
 {
-	uint32_t oid_len = 0;
-	uint32_t oid_value[128];
-
-	decode_asn1_oid(asn1_oid_value, asn1_oid_len, oid_value, &oid_len);
-
 	for (int i = 0; i < sizeof(oid_database) / sizeof(OID); i++) {
 		if (oid_database[i].oid_len == oid_len) {
 			if (memcmp(oid_database[i].oid_value, oid_value,
@@ -322,11 +397,15 @@ int asn1_lookup_oid(uint8_t asn1_oid_value[], uint8_t asn1_oid_len)
 	return OID_TYPE_UNKNOWN;
 }
 
-void print_oid(int oid_type)
+void print_oid(uint32_t oid_value[], uint32_t oid_len)
 {
 	printf("OID: ");
-	for (int i = 0; i < oid_database[oid_type].oid_len; i++)
-		printf("%d ", oid_database[oid_type].oid_value[i]);
+	for (int i = 0; i < oid_len; i++)
+		printf("%d ", oid_value[i]);
+}
+
+void print_oid_desc(int oid_type)
+{
 	printf(" (%s)\n", oid_database[oid_type].description);
 }
 
