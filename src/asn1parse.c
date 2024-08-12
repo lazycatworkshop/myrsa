@@ -138,7 +138,7 @@ int main(int argc, char *argv[])
 		level_len_inc(length_bytes + 1);
 		level_len_inc(length);
 		print_indent();
-		printf("%s\t", asn1_print_tag(tag));
+		printf("%s  ", asn1_print_tag(tag));
 		printf("L = %4d\n", length);
 		if (!length)
 			goto next_primitive;
@@ -331,7 +331,7 @@ void print_oid(int oid_type)
 }
 
 char indent_str[128] = { 0 };
-char *indent = &indent_str[1];
+char *indent = &indent_str[2];
 int indent_level = -1;
 uint32_t level_len[128] = { 0 };
 
@@ -343,13 +343,15 @@ void print_indent(void)
 void level_inc(uint32_t len)
 {
 	indent_level++;
-	indent_str[indent_level] = '\t';
+	indent_str[(indent_level << 1)] = ' ';
+	indent_str[(indent_level << 1) + 1] = ' ';
 	level_len[indent_level] = len;
 }
 
 void level_dec()
 {
-	indent_str[indent_level] = 0;
+	indent_str[(indent_level << 1)] = 0;
+	indent_str[(indent_level << 1) + 1] = 0;
 	indent_level--;
 }
 
