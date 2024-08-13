@@ -13,19 +13,21 @@ enum {
 	VERBOSE_LEVEL_DEBUG
 } verbose_level = VERBOSE_LEVEL_NONE;
 
+#define ASN1_TAG_CONSTRUCTIVE 0x20
+
 enum OID_TYPE {
-	OID_TYPE_RSA = 0,
+	OID_TYPE_ISO = 0,
 	OID_TYPE_EC_PUBLIC_KEY,
-	OID_TYPE_PRIME256V1,
+	OID_TYPE_SPCEP256R1,
 	OID_TYPE_ECDSA_WITH_SHA256,
+	OID_TYPE_RSA,
 	OID_TYPE_RSA_ENCRYPTION,
 	OID_TYPE_SHA256_WITH_RSA_ENCRYPTION,
-	OID_TYPE_CT_PRECERT_SCTS,
+	OID_TYPE_EMBEDDED_SCTS,
 	OID_TYPE_AUTHORITY_INFO_ACCESS,
-	OID_TYPE_OBJECT_CLASS,
 	OID_TYPE_COMMON_NAME,
 	OID_TYPE_ORGANIZATION_NAME,
-	OID_TYPE_X509V3_EXTENDED_KEY_USAGE,
+	OID_TYPE_SUBJECT_KEY_IDENTIFIER,
 	OID_TYPE_KEY_USAGE,
 	OID_TYPE_SUBJECT_ALT_NAME,
 	OID_TYPE_BASIC_CONSTRAINTS,
@@ -125,21 +127,22 @@ int main(int argc, char *argv[])
 		ASN1_TAG_NULL = 0x05,
 		ASN1_TAG_OBJECT_IDENTIFIER = 0x06,
 		ASN1_TAG_UTF8_STRING = 0x0c,
+		ASN1_TAG_RELATIVE_OID = 0x0d,
+		ASN1_TAG_SEQUENCE = 0x10,
+		ASN1_TAG_SET = 0x11,
 		ASN1_TAG_PRINTABLE_STRING = 0x13,
+		ASN1_TAG_VID_STRING = 0x15,
 		ASN1_TAG_UTC = 0x17,
-		ASN1_TAG_SEQUENCE = 0x30,
-		ASN1_TAG_SET = 0x31,
-		ASN1_TAG_CONTEXT_SPECIFIC_0 = 0xa0,
-		ASN1_TAG_CONTEXT_SPECIFIC_3 = 0xa3,
-		ASN1_TAG_CONTEXT_SPECIFIC_4 = 0xa4,
+		ASN1_TAG_GENERALIZED_TIME = 0x18,
+		ASN1_TAG_CONTEXT_SPECIFIC_0 = 0x80,
+		ASN1_TAG_CONTEXT_SPECIFIC_3 = 0x83,
+		ASN1_TAG_CONTEXT_SPECIFIC_4 = 0x84,
 		/* Add more tags here */
 		ASN1_TAG_UNKNOWN = 0xff
 	};
 
-	const uint8_t ans1_tag_constructive = 0x20;
-
 	/* Parse the ASN.1 content */
-	uint8_t is_construct = 0;
+	int is_constructive = 0;
 	while ((c = getc(fp)) != EOF) {
 		uint8_t length_bytes = 0;
 		int length = 0;
@@ -173,7 +176,7 @@ int main(int argc, char *argv[])
 		if (!length)
 			goto next_primitive;
 
-		if (tag & ans1_tag_constructive)
+		if (tag & ASN1_TAG_CONSTRUCTIVE)
 			goto next_constructive;
 
 		/* Content octets */
@@ -189,25 +192,27 @@ int main(int argc, char *argv[])
 			decode_asn1_oid(asn1_oid_value, length, oid_value,
 					&oid_len);
 			int oid_type = asn1_lookup_oid(oid_value, oid_len);
-
-			switch (oid_type) {
-			case OID_TYPE_RSA_ENCRYPTION:
-				is_construct = 1;
-				break;
-			default:
-				is_construct = 0;
-				break;
-			}
 			if (verbose_level >= VERBOSE_LEVEL_INFO) {
 				print_oid(oid_value, oid_len);
 				print_oid_desc(oid_type);
+			}
+
+			switch (oid_type) {
+			case OID_TYPE_RSA:
+			case OID_TYPE_EC_PUBLIC_KEY:
+			case OID_TYPE_ECDSA_WITH_SHA256:
+			case OID_TYPE_RSA_ENCRYPTION:
+				is_constructive = 1;
+				break;
+			default:
+				is_constructive = 0;
 			}
 
 			goto next_primitive;
 		}
 
 		if (tag == ASN1_TAG_BIT_STRING) {
-			uint8_t unused_bits = getc(fp);
+			int unused_bits = getc(fp);
 			if (verbose_level >= VERBOSE_LEVEL_INFO) {
 				printf("%04ld: ", ftell(fp) - 1);
 				printf("%2d - Unused bits\n", unused_bits);
@@ -215,13 +220,25 @@ int main(int argc, char *argv[])
 			length--;
 			level_len_dec(1);
 
-			if (is_construct)
+			if (is_constructive)
 				goto next_constructive;
 		}
 
-		if (tag == ASN1_TAG_OCTET_STRING) {
-			if (is_construct)
+		if (tag == ASN1_TAG_OCTET_STRING)
+			if (is_constructive)
 				goto next_constructive;
+
+		if (tag == ASN1_TAG_PRINTABLE_STRING || tag == ASN1_TAG_UTC) {
+			char printable_string[128];
+			for (int i = 0; i < length; i++) {
+				printable_string[i] = getc(fp);
+			}
+			printable_string[length] = 0;
+			if (verbose_level >= VERBOSE_LEVEL_INFO) {
+				printf("%04ld: ", ftell(fp) - length);
+				printf("%s\n", printable_string);
+			}
+			goto next_primitive;
 		}
 
 		/* General primitives */
@@ -253,11 +270,12 @@ out: /* Clean up */
 	return ret;
 }
 
+#define ASN1_TAG_NUM 0xdf /* Take out P/C bit */
 const char *asn1_print_tag(uint8_t tag)
 {
 	const char *ret = NULL;
 
-	switch (tag) {
+	switch (tag & ASN1_TAG_NUM) {
 	case 0x00:
 		ret = "EOC";
 		break;
@@ -282,26 +300,35 @@ const char *asn1_print_tag(uint8_t tag)
 	case 0x0c:
 		ret = "UTF8 STRING";
 		break;
+	case 0x0d:
+		ret = "RELATIVE OID";
+		break;
+	case 0x10:
+		ret = "SEQUENCE";
+		break;
+	case 0x11:
+		ret = "SET";
+		break;
 	case 0x13:
 		ret = "PRINTABLE STRING";
+		break;
+	case 0x15:
+		ret = "VID STRING";
 		break;
 	case 0x17:
 		ret = "UTC TIME";
 		break;
-	case 0x30:
-		ret = "SEQUENCE";
+	case 0x18:
+		ret = "GeneralizedTime";
 		break;
-	case 0xa0:
+	case 0x80:
 		ret = "CONTEXT SPECIFIC 0";
 		break;
-	case 0xa3:
+	case 0x83:
 		ret = "CONTEXT SPECIFIC 3";
 		break;
-	case 0xa4:
+	case 0x84:
 		ret = "CONTEXT SPECIFIC 4";
-		break;
-	case 0x31:
-		ret = "SET";
 		break;
 	default:
 		ret = NULL;
@@ -318,28 +345,35 @@ typedef struct {
 } OID;
 
 OID oid_database[] = {
-	{ .oid_len = 4,
-	  .oid_value = { 1, 2, 840, 113549 },
-	  .description = "RSA" },
-	{ 6, { 1, 2, 840, 10045, 2, 1 }, "ecPublicKey" },
-	{ 7, { 1, 2, 840, 10045, 3, 1, 7 }, "prime256v1" },
-	{ 7, { 1, 2, 840, 10045, 4, 3, 2 }, "ecdsa-with-SHA256" },
-	{ 7, { 1, 2, 840, 113549, 1, 1, 1 }, "rsaEncryption" },
-	{ 7, { 1, 2, 840, 113549, 1, 1, 11 }, "sha256withRSAEncryption" },
-	{ 10, { 1, 3, 6, 1, 4, 1, 11129, 2, 4, 2 }, "ct_precert_scts" },
-	{ 9, { 1, 3, 6, 1, 5, 5, 7, 1, 1 }, "authorityInfoAccess" },
-	{ 4, { 2, 5, 4, 0 }, "objectClass" },
-	{ 4, { 2, 5, 4, 3 }, "commonName" },
-	{ 4, { 2, 5, 4, 6 }, "countryName" },
-	{ 4, { 2, 5, 4, 10 }, "organizationName" },
-	{ 4, { 2, 5, 29, 14 }, "x509v3ExtendedKeyUsage" },
-	{ 4, { 2, 5, 29, 15 }, "keyUsage" },
-	{ 4, { 2, 5, 29, 17 }, "subjectAltName" },
-	{ 4, { 2, 5, 29, 19 }, "basicConstraints" },
-	{ 4, { 2, 5, 29, 31 }, "cRLDistributionPoints" },
-	{ 4, { 2, 5, 29, 32 }, "certificatePolicies" },
-	{ 4, { 2, 5, 29, 35 }, "authorityKeyIdentifier" },
-	{ 4, { 2, 5, 29, 37 }, "extKeyUsage" },
+	{ .oid_len = 2, .oid_value = { 1, 2 }, .description = "iso" },
+	{ 6, { 1, 2, 840, 10045, 2, 1 }, "id-ecPublicKey" }, /* X.501 */
+	{ 7, { 1, 2, 840, 10045, 3, 1, 7 }, "secp256r1" }, /* RFC 5480*/
+	{ 7, { 1, 2, 840, 10045, 4, 3, 2 }, "ecdsa-with-SHA256" }, /* RFC 5758 */
+	{ 4, { 1, 2, 840, 113549 }, "rsadsi" }, /* X.509 */
+	{ 7, { 1, 2, 840, 113549, 1, 1, 1 }, "rsaEncryption" }, /* RFC 4055 */
+	{ 7,
+	  { 1, 2, 840, 113549, 1, 1, 11 },
+	  "sha256WithRSAEncryption" }, /* RFC 4055 */
+	{ 10,
+	  { 1, 3, 6, 1, 4, 1, 11129, 2, 4, 2 },
+	  "embedded-scts" }, /* RFC 6962 */
+	{ 9,
+	  { 1, 3, 6, 1, 5, 5, 7, 1, 1 },
+	  "id-pe-authorityInfoAccess" }, /* RFC 5280 */
+	/* X.520 */
+	{ 4, { 2, 5, 4, 3 }, "id-at-commonName" },
+	{ 4, { 2, 5, 4, 6 }, "id-at-countryName" },
+	{ 4, { 2, 5, 4, 10 }, "id-at-organizationName" },
+
+	/* X.509 */
+	{ 4, { 2, 5, 29, 14 }, "id-ce-subjectKeyIdentifier" },
+	{ 4, { 2, 5, 29, 15 }, "id-ce-keyUsage" },
+	{ 4, { 2, 5, 29, 17 }, "id-ce-subjectAltName" },
+	{ 4, { 2, 5, 29, 19 }, "id-ce-basicConstraints" },
+	{ 4, { 2, 5, 29, 31 }, "id-ce-RLDistributionPoints" },
+	{ 4, { 2, 5, 29, 32 }, "id-ce-certificatePolicies" },
+	{ 4, { 2, 5, 29, 35 }, "id-ce-authorityKeyIdentifier" },
+	{ 4, { 2, 5, 29, 37 }, "id-ce-extKeyUsage" },
 
 	/* Add more OIDs as needed */
 	{ 0, { 0 }, "Unknown OID" }
