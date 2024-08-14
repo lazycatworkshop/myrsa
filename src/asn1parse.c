@@ -346,7 +346,7 @@ typedef struct {
 
 OID oid_database[] = {
 	{ .oid_len = 2, .oid_value = { 1, 2 }, .description = "iso" },
-	{ 6, { 1, 2, 840, 10045, 2, 1 }, "id-ecPublicKey" }, /* X.501 */
+	{ 6, { 1, 2, 840, 10045, 2, 1 }, "id-ecPublicKey" }, /* RFC 5480 */
 	{ 7, { 1, 2, 840, 10045, 3, 1, 7 }, "secp256r1" }, /* RFC 5480*/
 	{ 7, { 1, 2, 840, 10045, 4, 3, 2 }, "ecdsa-with-SHA256" }, /* RFC 5758 */
 	{ 4, { 1, 2, 840, 113549 }, "rsadsi" }, /* X.509 */
