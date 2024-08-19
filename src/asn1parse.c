@@ -149,7 +149,6 @@ int main(int argc, char *argv[])
 	};
 
 	/* Parse the ASN.1 content */
-	int is_constructive = 0;
 	while ((c = getc(fp)) != EOF) {
 		uint8_t length_bytes = 0;
 		int length = 0;
@@ -203,21 +202,6 @@ int main(int argc, char *argv[])
 				print_oid(oid_value, oid_len);
 				print_oid_desc(oid_type);
 			}
-			switch (oid_type) {
-			case OID_TYPE_RSA_ENCRYPTION:
-			case OID_TYPE_AUTHORITY_INFO_ACCESS:
-			case OID_TYPE_SUBJECT_ALT_NAME:
-			case OID_TYPE_AUTHORITY_KEY_IDENTIFIER:
-			case OID_TYPE_CERTIFICATE_POLICIES:
-			case OID_TYPE_CRL_DISTRIBUTION_POINTS:
-			case OID_TYPE_KEY_USAGE:
-			case OID_TYPE_EXT_KEY_USAGE:
-				is_constructive = 1;
-				break;
-			default:
-				is_constructive = 0;
-				break;
-			}
 
 			goto next_primitive;
 		}
@@ -230,14 +214,7 @@ int main(int argc, char *argv[])
 			}
 			length--;
 			level_len_dec(1);
-
-			if (is_constructive && (length > 2))
-				goto next_constructive;
 		}
-
-		if (tag == ASN1_TAG_OCTET_STRING)
-			if (is_constructive && (length > 2))
-				goto next_constructive;
 
 		if (tag == ASN1_TAG_PRINTABLE_STRING || tag == ASN1_TAG_UTC ||
 		    tag == ASN1_TAG_CONTEXT_SPECIFIC_2 ||
@@ -472,7 +449,7 @@ void print_oid_desc(int oid_type)
 }
 
 char indent_str[128] = { 0 };
-char *indent = &indent_str[2];
+char *indent = &indent_str[1];
 int indent_level = -1;
 uint32_t level_len[128] = { 0 };
 
@@ -484,15 +461,13 @@ void print_indent(void)
 void level_inc(uint32_t len)
 {
 	indent_level++;
-	indent_str[(indent_level << 1)] = ' ';
-	indent_str[(indent_level << 1) + 1] = ' ';
+	indent_str[indent_level] = '-';
 	level_len[indent_level] = len;
 }
 
 void level_dec()
 {
-	indent_str[(indent_level << 1)] = 0;
-	indent_str[(indent_level << 1) + 1] = 0;
+	indent_str[indent_level] = 0;
 	indent_level--;
 }
 
