@@ -91,15 +91,17 @@ out:
 	return ret;
 }
 
+#define ASN1_TAG_MASK 0xdf /* Take out P/C flag */
 int asn1_find_tag(FILE *fp, uint8_t tag)
 {
 	int c;
-	while ((c = getc(fp)) != tag) {
-		if (c == EOF) {
-			return -1;
+	while ((c = getc(fp)) != EOF) {
+		int t = c & ASN1_TAG_MASK;
+		if (t == tag) {
+			return 0;
 		}
 	}
-	return 0;
+	return -1;
 }
 
 int asn1_get_length(FILE *fp)
