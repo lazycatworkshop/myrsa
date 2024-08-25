@@ -17,7 +17,7 @@ INC_DIR=include
 CCFLAG += -I$(INC_DIR)
 
 # Define executables and their specific source files
-EXECUTABLES=demo_rsa_keys demo_rsa_sign demo_rsa_verify pem2der asn1parse rsa_text_public_key
+EXECUTABLES=demo_rsa_keys demo_rsa_sign demo_rsa_verify pem2der asn1parse rsa_text_public_key x509_text_public_key
 demo_rsa_keys_SOURCES=$(SRC_DIR)/demo_rsa_keys.c $(SRC_DIR)/myrsa.c  $(SRC_DIR)/myrsa_math.c
 demo_rsa_sign_SOURCES=$(SRC_DIR)/demo_rsa_sign.c $(SRC_DIR)/myrsa.c $(SRC_DIR)/myrsa_math.c $(SRC_DIR)/mycrc.c
 demo_rsa_verify_SOURCES=$(SRC_DIR)/demo_rsa_verify.c $(SRC_DIR)/myrsa.c $(SRC_DIR)/myrsa_math.c $(SRC_DIR)/mycrc.c
@@ -67,6 +67,9 @@ asn1parse: $(asn1parse_OBJECTS)
 
 rsa_text_public_key: $(rsa_text_public_key_OBJECTS)
 	$(CC) $^ -o $(BIN_DIR)/$@
+
+x509_text_public_key: $(SRC_DIR)/x509_text_public_key.c
+	$(CC) $(CFLAGS) $^ -o $(BIN_DIR)/$@
 
 # Compile test sources into test binaries
 
