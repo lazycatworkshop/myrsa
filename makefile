@@ -2,7 +2,7 @@ CC=gcc
 CFLAGS=-Wall -Iinclude -std=c99
 # Conditional debug flags based on the DEBUG variable
 ifdef DEBUG
-CFLAGS += -g -O0
+CFLAGS += -g -O0 -DDEBUG
 else
 CFLAGS += -O2
 endif
@@ -34,7 +34,7 @@ asn1parse_OBJECTS=$(asn1parse_SOURCES:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 rsa_text_public_key_OBJECTS=$(rsa_text_public_key_SOURCES:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 
 TEST_BINARIES=test_myrsa test_myrsa_math test_mycrc
-test_myrsa_SOURCES=$(SRC_DIR)/test_myrsa.c $(SRC_DIR)/myrsa.c $(SRC_DIR)/myrsa_math.c
+test_myrsa_SOURCES=$(SRC_DIR)/test_myrsa.c $(SRC_DIR)/myrsa.c $(SRC_DIR)/myrsa_math.c $(SRC_DIR)/SHA.c
 test_myrsa_math_SOURCES=$(SRC_DIR)/test_myrsa_math.c $(SRC_DIR)/myrsa_math.c
 test_mycrc_SOURCES=$(SRC_DIR)/test_mycrc.c $(SRC_DIR)/mycrc.c
 
