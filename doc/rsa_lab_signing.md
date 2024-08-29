@@ -162,7 +162,7 @@ $ hexdump -C msg.sig
 $ 
 ```
 
-'rsautl' command is not accept in newer versions of openssl, so we go with 'pkeyutl -sign' as prompted.
+'rsautl' command is not accepted in newer versions of openssl, so we go with 'pkeyutl -sign' as prompted.
 
 'pkeyutl -sign' signs any file as a whole so we use the binary hash file and generates the binary signature. We have a 512-bit private key, means 512-bit modulus, hence the 512-bit (64 bytes) of signature.
 
