@@ -5,6 +5,11 @@
  */
 
 #include <stdint.h>
+#ifdef DEBUG
+#include <stdlib.h>
+#include <stdio.h>
+#endif
+#include <stdio.h>
 #include <stddef.h>
 #include <string.h>
 #include "mySHA.h"
@@ -156,46 +161,38 @@ void SHA256_compute_hash(char msg[], size_t len, uint32_t H[])
 {
 	SHA256_init(H);
 
-	uint32_t M[SHA256_BLOCK_SIZE / 8]; /* message block */
-	size_t offset = 0; /* pointer for processed input message */
-	size_t remaining = len; /*input message to be processed */
+	uint32_t M[SHA256_BLOCK_SIZE / SHA256_WORD_SIZE]; /* message block */
+	size_t offset = 0; /* byte count for processed bytes */
+	size_t block_len; /* data bytes in a block */
+	while (offset < len) {
+		block_len = len - offset < sizeof(M) ? len - offset : sizeof(M);
+		memset(M, 0, sizeof(M));
+		for (size_t i = 0; i < block_len; i++) {
+			M[i / 4] |= (uint32_t)msg[offset + i]
+				    << (24 - 8 * (i % 4));
+		}
 
-	while (remaining >= SHA256_BLOCK_SIZE / 8) {
-		/* Inline parsing */
-		uint32_t *p = (uint32_t *)msg;
-		uint32_t *m = M;
-		for (size_t i = 0; i < 16; i++) {
-			*m = (((*p) >> 24) | (((*p) >> 8) & 0x0000FF00) |
-			      (((*p) << 8) & 0x00FF0000) | ((*p) << 24));
-			p++;
-			m++;
+		/* Padding */
+		if (block_len < 64) {
+			/* Bit value one after the last input byte */
+			M[block_len / 4] |= 0x80 << (24 - 8 * (block_len % 4));
+			if (block_len < 56) { /* Room for length bytes */
+				M[14] = (uint32_t)(len >> 29);
+				M[15] = (uint32_t)(len << 3);
+			} else { /* Not enough room */
+				SHA256_process_block(
+					M, H); /* complete current block */
+				offset += block_len;
+				memset(M, 0, 64); /* new block */
+				M[14] = (uint32_t)(len >> 29);
+				M[15] = (uint32_t)(len << 3);
+				SHA256_process_block(M, H);
+				break;
+			}
 		}
 		SHA256_process_block(M, H);
-		remaining -= SHA256_BLOCK_SIZE << 3; /* 8 bits/byte */
+		offset += block_len;
 	}
-
-	/* Padding */
-	if (remaining > 0) {
-		memset(M, 0, sizeof(M));
-		/* Remanent */
-		for (size_t i = 0; i < remaining; i++) {
-			M[i / 4] |= msg[offset++] << (24 - 8 * (i % 4));
-		}
-	}
-
-	/* Append 1 bit */
-	M[remaining / 4] |= 0x80 << (24 - 8 * (remaining % 4));
-
-	/* Append length */
-	if (remaining >= 56) { /* > 512-64=448 bits, length is in a new block */
-		SHA256_process_block(M, H);
-		memset(M, 0, sizeof(M));
-	}
-
-	/* Length is in the last 64  bits */
-	M[14] = (len >> 29);
-	M[15] = (len << 3);
-	SHA256_process_block(M, H);
 };
 
 void SHA256_get_digest(uint32_t H[], uint8_t digest[])
