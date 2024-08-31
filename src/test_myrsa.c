@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include <string.h>
 #include "myrsa.h"
-#include "SHA.h"
+#include "mySHA.h"
 
 void test_generate_RSA_keys()
 {
