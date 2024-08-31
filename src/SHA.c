@@ -156,7 +156,7 @@ void SHA256_compute_hash(char msg[], size_t len, uint32_t H[])
 {
 	SHA256_init(H);
 
-	uint32_t M[16]; /* message block: 512 bits */
+	uint32_t M[SHA256_BLOCK_SIZE / 8]; /* message block */
 	size_t offset = 0; /* pointer for processed input message */
 	size_t remaining = len; /*input message to be processed */
 
@@ -185,10 +185,12 @@ void SHA256_compute_hash(char msg[], size_t len, uint32_t H[])
 	M[remaining / 4] |= 0x80 << (24 - 8 * (remaining % 4));
 
 	/* Append length */
-	if (remaining >= 56) {
+	if (remaining >= 56) { /* > 512-64=448 bits, length is in a new block */
 		SHA256_process_block(M, H);
 		memset(M, 0, sizeof(M));
 	}
+
+	/* Length is in the last 64  bits */
 	M[14] = (len >> 29);
 	M[15] = (len << 3);
 	SHA256_process_block(M, H);
