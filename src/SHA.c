@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <string.h>
-#include "SHA.h"
+#include "mySHA.h"
 
 /***** SHA-256 *****/
 uint32_t SHA256_K[] = {
@@ -163,12 +163,14 @@ void SHA256_compute_hash(char msg[], size_t len, uint32_t H[])
 	while (remaining >= SHA256_BLOCK_SIZE / 8) {
 		/* Inline parsing */
 		uint32_t *p = (uint32_t *)msg;
+		uint32_t *m = M;
 		for (size_t i = 0; i < 16; i++) {
-			M[i] = (((*p) >> 24) | (((*p) >> 8) & 0x0000FF00) |
-				(((*p) << 8) & 0x00FF0000) | ((*p) << 24));
+			*m = (((*p) >> 24) | (((*p) >> 8) & 0x0000FF00) |
+			      (((*p) << 8) & 0x00FF0000) | ((*p) << 24));
+			p++;
+			m++;
 		}
 		SHA256_process_block(M, H);
-		p++;
 		remaining -= SHA256_BLOCK_SIZE << 3; /* 8 bits/byte */
 	}
 
