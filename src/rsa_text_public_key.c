@@ -44,6 +44,12 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	if (fp == NULL) {
+		fprintf(stderr, "Usage: %s -f <file>\n", argv[0]);
+		ret = EXIT_FAILURE;
+		goto out;
+	}
+
 	printf("PKCS #1 Public Key\n");
 
 	if (asn1_find_tag(fp, ASN1_TAG_BIT_STRING) < 0) {
