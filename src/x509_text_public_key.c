@@ -80,6 +80,12 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	if (c == -1) {
+		fprintf(stderr, "Usage: %s -f <file>\n", argv[0]);
+		ret = EXIT_FAILURE;
+		goto out;
+	}
+
 	/* Quick check */
 	if (asn1_find_tag(fp, ASN1_TAG_CONTEXT_SPECIFIC_0) < 0) {
 		fprintf(stderr, "Error: Unable to find version component\n");
