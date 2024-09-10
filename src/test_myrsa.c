@@ -8,6 +8,7 @@
 #include <string.h>
 #include "myrsa.h"
 #include "mySHA.h"
+#include "big_number.h"
 
 void test_generate_RSA_keys()
 {
@@ -25,6 +26,29 @@ void test_RSA_trapdoor()
 	uint64_t message, key, modulus;
 	assert(RSA_trapdoor(message = 5, key = 3, modulus = 11) == 4);
 	assert(RSA_trapdoor(987654321, 123456789, 1000000007) == 379110096);
+}
+
+/* Test RSA_trapdoor_big */
+void test_RSA_trapdoor_big()
+{
+	bn message = bn_from_int(5);
+	bn key = bn_from_int(3);
+	bn modulus = bn_from_int(11);
+	bn result = RSA_trapdoor_big(message, key, modulus);
+	assert(result.size == 1);
+	assert(result.data[0] == 4);
+
+	message = bn_from_int(987654321);
+	key = bn_from_int(123456789);
+	modulus = bn_from_int(1000000007);
+	result = RSA_trapdoor_big(message, key, modulus);
+	assert(result.size == 4);
+	assert(result.data[0] == 0x16);
+	assert(result.data[1] == 0x98);
+	assert(result.data[2] == 0xc2);
+	assert(result.data[3] == 0xd0);
+
+	/* Add more test cases... */
 }
 
 /* Reference: 
@@ -81,11 +105,136 @@ void test_SHA()
 	/* Add more test cases... */
 }
 
+void test_big_number()
+{
+	/* Test bn_init */
+	bn a;
+	bn_init(&a);
+	assert(a.size == 0);
+	assert(a.data[0] == 0);
+
+	/* Test bn_copy */
+	bn b;
+	bn_init(&b);
+	bn_copy(&b, &a);
+	assert(b.size == 0);
+	assert(b.data[0] == 0);
+
+	/* Test bn_from_int */
+	bn c = bn_from_int(0x12345678);
+	assert(c.size == 4);
+	assert(c.data[0] == 0x12);
+	assert(c.data[1] == 0x34);
+	assert(c.data[2] == 0x56);
+	assert(c.data[3] == 0x78);
+
+	/* Test bn_to_string */
+	char str[9];
+	bn_to_string(&c, str, sizeof(str));
+	assert(strcmp(str, "12345678") == 0);
+
+	/* Test bn_is_not_zero */
+	assert(bn_is_not_zero(&a) == 0);
+	assert(bn_is_not_zero(&c) == 1);
+
+	/* Test bn_is_odd */
+	assert(bn_is_odd(&a) == 0);
+	assert(bn_is_odd(&c) == 0);
+
+	/* Test bn_add */
+	bn d = bn_add(c, c);
+	assert(d.size == 4);
+	assert(d.data[0] == 0x24);
+	assert(d.data[1] == 0x68);
+	assert(d.data[2] == 0xac);
+	assert(d.data[3] == 0xf0);
+
+	/* Test bn_inc */
+	bn e;
+	bn_init(&e);
+	bn_inc(&e);
+	assert(e.size == 1);
+	assert(e.data[0] == 1);
+
+	/* Test bn_sub */
+	bn f = bn_sub(c, c);
+	assert(f.size == c.size);
+	assert(f.data[0] == 0);
+	assert(f.data[c.size - 1] == 0);
+
+	/* Test bn_mul */
+	bn g = bn_mul(c, c);
+	assert(g.size == 8);
+	assert(g.data[0] == 0x01);
+	assert(g.data[1] == 0x4b);
+	assert(g.data[2] == 0x66);
+	assert(g.data[3] == 0xdc);
+	assert(g.data[4] == 0x1d);
+	assert(g.data[5] == 0xf4);
+	assert(g.data[6] == 0xd8);
+	assert(g.data[7] == 0x40);
+
+	/* Test bn_cmp */
+	assert(bn_cmp(&a, &b) == 0);
+	assert(bn_cmp(&a, &c) == -1);
+	assert(bn_cmp(&c, &a) == 1);
+
+	/* Test bn_left_shift */
+	bn h;
+	bn_init(&h);
+	h.data[0] = 0x01;
+	h.data[1] = 0x80;
+	h.size = 2;
+	bn_left_shift(&h);
+	assert(h.size == 2);
+	assert(h.data[0] == 0x03);
+	assert(h.data[1] == 0x00);
+
+	/* Test bn_right_shift */
+	bn p;
+	bn_init(&p);
+	p.data[0] = 0x03;
+	p.data[1] = 0x00;
+	p.size = 2;
+	bn_right_shift(&p);
+	assert(p.size == 2);
+	assert(p.data[0] == 0x01);
+	assert(p.data[1] == 0x80);
+
+	/* Test bn_mod */
+	bn i = bn_from_int(0x1234567);
+	bn j = bn_from_int(0xfff);
+	bn k = bn_mod(i, j);
+	assert(k.size == j.size);
+	assert(k.data[0] == 0x07);
+	assert(k.data[1] == 0x9c);
+
+	/* c == c */
+	bn l = bn_mod(c, c);
+	assert(l.size == c.size);
+	assert(l.data[0] == 0);
+	assert(l.data[l.size - 1] == 0);
+
+	/* g > c */
+	bn m = bn_mod(g, c);
+	assert(m.size == c.size);
+	assert(m.data[0] == 0x00);
+	assert(m.data[m.size - 1] == 0x00);
+
+	/* c < d */
+	bn n = bn_mod(c, d);
+	assert(n.size == d.size);
+	assert(n.data[0] == 0x12);
+	assert(n.data[n.size - 1] == 0x78);
+}
+
 int main()
 {
 	test_generate_RSA_keys();
 	test_RSA_trapdoor();
 	test_SHA();
+	test_big_number();
+	test_RSA_trapdoor_big();
 
 	/* Add calls to more test functions as needed... */
 

@@ -17,10 +17,10 @@ INC_DIR=include
 CCFLAG += -I$(INC_DIR)
 
 # Define executables and their specific source files
-EXECUTABLES=demo_rsa_keys demo_rsa_sign demo_rsa_verify pem2der asn1parse rsa_text_public_key x509_text_public_key
-demo_rsa_keys_SOURCES=$(SRC_DIR)/demo_rsa_keys.c $(SRC_DIR)/myrsa.c  $(SRC_DIR)/myrsa_math.c
-demo_rsa_sign_SOURCES=$(SRC_DIR)/demo_rsa_sign.c $(SRC_DIR)/myrsa.c $(SRC_DIR)/myrsa_math.c $(SRC_DIR)/mycrc.c
-demo_rsa_verify_SOURCES=$(SRC_DIR)/demo_rsa_verify.c $(SRC_DIR)/myrsa.c $(SRC_DIR)/myrsa_math.c $(SRC_DIR)/mycrc.c
+EXECUTABLES=demo_rsa_keys demo_rsa_sign demo_rsa_verify pem2der asn1parse rsa_text_public_key x509_text_public_key x509_extract_tbs x509_extract_sig x509_extract_pubkey der2pem myrsa_sha256
+demo_rsa_keys_SOURCES=$(SRC_DIR)/demo_rsa_keys.c $(SRC_DIR)/myrsa.c  $(SRC_DIR)/myrsa_math.c $(SRC_DIR)/big_number.c
+demo_rsa_sign_SOURCES=$(SRC_DIR)/demo_rsa_sign.c $(SRC_DIR)/myrsa.c $(SRC_DIR)/myrsa_math.c $(SRC_DIR)/mycrc.c $(SRC_DIR)/big_number.c
+demo_rsa_verify_SOURCES=$(SRC_DIR)/demo_rsa_verify.c $(SRC_DIR)/myrsa.c $(SRC_DIR)/myrsa_math.c $(SRC_DIR)/mycrc.c $(SRC_DIR)/big_number.c
 
 # Convert source files to object files for each executable
 demo_rsa_keys_OBJECTS=$(demo_rsa_keys_SOURCES:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
@@ -28,7 +28,7 @@ demo_rsa_sign_OBJECTS=$(demo_rsa_sign_SOURCES:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 demo_rsa_verify_OBJECTS=$(demo_rsa_verify_SOURCES:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 
 TEST_BINARIES=test_myrsa test_myrsa_math test_mycrc
-test_myrsa_SOURCES=$(SRC_DIR)/test_myrsa.c $(SRC_DIR)/myrsa.c $(SRC_DIR)/myrsa_math.c $(SRC_DIR)/SHA.c
+test_myrsa_SOURCES=$(SRC_DIR)/test_myrsa.c $(SRC_DIR)/myrsa.c $(SRC_DIR)/myrsa_math.c $(SRC_DIR)/mySHA.c $(SRC_DIR)/big_number.c
 test_myrsa_math_SOURCES=$(SRC_DIR)/test_myrsa_math.c $(SRC_DIR)/myrsa_math.c
 test_mycrc_SOURCES=$(SRC_DIR)/test_mycrc.c $(SRC_DIR)/mycrc.c
 
@@ -45,13 +45,13 @@ $(OBJ_DIR) $(BIN_DIR) $(TEST_BIN_DIR):
 	@mkdir -p $(OBJ_DIR) $(BIN_DIR) $(TEST_BIN_DIR)
 
 demo_rsa_keys: $(demo_rsa_keys_OBJECTS)
-	$(CC) $^ -o $(BIN_DIR)/$@
+	$(CC) $(CFLAGS) $^ -o $(BIN_DIR)/$@
 
 demo_rsa_sign: $(demo_rsa_sign_OBJECTS)
-	$(CC) $^ -o $(BIN_DIR)/$@
+	$(CC) $(CFLAGS) $^ -o $(BIN_DIR)/$@
 
 demo_rsa_verify: $(demo_rsa_verify_OBJECTS)
-	$(CC) $^ -o $(BIN_DIR)/$@
+	$(CC) $(CFLAGS) $^ -o $(BIN_DIR)/$@
 
 pem2der: $(SRC_DIR)/pem2der.c
 	$(CC) $(CFLAGS) $^ -o $(BIN_DIR)/$@
@@ -65,16 +65,31 @@ rsa_text_public_key: $(SRC_DIR)/rsa_text_public_key.c
 x509_text_public_key: $(SRC_DIR)/x509_text_public_key.c
 	$(CC) $(CFLAGS) $^ -o $(BIN_DIR)/$@
 
+x509_extract_tbs: $(SRC_DIR)/x509_extract_tbs.c
+	$(CC) $(CFLAGS) $^ -o $(BIN_DIR)/$@
+
+x509_extract_sig: $(SRC_DIR)/x509_extract_sig.c
+	$(CC) $(CFLAGS) $^ -o $(BIN_DIR)/$@
+
+x509_extract_pubkey: $(SRC_DIR)/x509_extract_pubkey.c
+	$(CC) $(CFLAGS) $^ -o $(BIN_DIR)/$@
+
+der2pem: $(SRC_DIR)/der2pem.c
+	$(CC) $(CFLAGS) $^ -o $(BIN_DIR)/$@
+
+myrsa_sha256: $(SRC_DIR)/myrsa_sha256.c $(SRC_DIR)/mySHA.c
+	$(CC) $(CFLAGS) $^ -o $(BIN_DIR)/$@
+
 # Compile test sources into test binaries
 
 test_myrsa: $(test_myrsa_OBJECTS)
-	$(CC) $^ -o $(TEST_BIN_DIR)/$@
+	$(CC) $(CFLAGS) $^ -o $(TEST_BIN_DIR)/$@
 
 test_mycrc: $(test_mycrc_OBJECTS)
-	$(CC) $^ -o $(TEST_BIN_DIR)/$@
+	$(CC) $(CFLAGS) $^ -o $(TEST_BIN_DIR)/$@
 
 test_myrsa_math: $(test_myrsa_math_OBJECTS)
-	$(CC) $^ -o $(TEST_BIN_DIR)/$@
+	$(CC) $(CFLAGS) $^ -o $(TEST_BIN_DIR)/$@
 
 # Test target
 #.PHONY: test

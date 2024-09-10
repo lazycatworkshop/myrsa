@@ -1,10 +1,11 @@
 /**
  * myrsa.c - Implementation of RSA functions.
  */
-#include "myrsa_math.h"
 #include <stddef.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include "myrsa_math.h"
+#include "big_number.h"
 
 static uint64_t max(uint64_t a, uint64_t b)
 {
@@ -73,5 +74,32 @@ uint64_t RSA_trapdoor(uint64_t message, uint64_t key, uint64_t modulus)
 		message = (message * message) % modulus; /* Square */
 		key >>= 1;
 	}
+	return r;
+}
+
+/**
+ * RSA_trapdoor_big - Encrypt or decrypt a message by RSA.
+ * 
+ * @message: The message.
+ * @key: The key.
+ * @modulus: The modulus.
+ * 
+ * This function uses exponentiation by "repeated squaring and multiplication
+ * to compute C = M^key % modulus". The caller is responsible for ensuring
+ * the input message is not greater than the modulus.
+ * 
+ * Return: The result of the modular exponentiation.
+ */
+bn RSA_trapdoor_big(bn message, bn key, bn modulus)
+{
+	bn r = bn_from_int(1);
+	while (bn_is_not_zero(&key)) {
+		if (bn_is_odd(&key)) {
+			r = bn_mod(bn_mul(r, message), modulus);
+		}
+		message = bn_mod(bn_mul(message, message), modulus);
+		bn_right_shift(&key);
+	}
+
 	return r;
 }
