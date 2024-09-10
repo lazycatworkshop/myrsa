@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if (c == -1) {
+	if (fp == NULL) {
 		fprintf(stderr, "Usage: %s -f <file>\n", argv[0]);
 		ret = EXIT_FAILURE;
 		goto out;
