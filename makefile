@@ -17,15 +17,16 @@ INC_DIR=include
 CCFLAG += -I$(INC_DIR)
 
 # Define executables and their specific source files
-EXECUTABLES=demo_rsa_keys demo_rsa_sign demo_rsa_verify pem2der asn1parse rsa_text_public_key x509_text_public_key x509_extract_tbs x509_extract_sig x509_extract_pubkey der2pem myrsa_sha256
+EXECUTABLES=demo_rsa_keys demo_rsa_sign demo_rsa_verify pem2der asn1parse rsa_text_public_key x509_text_public_key x509_extract_tbs x509_extract_sig x509_extract_pubkey der2pem myrsa_sha256 myrsa_trapdoor
 demo_rsa_keys_SOURCES=$(SRC_DIR)/demo_rsa_keys.c $(SRC_DIR)/myrsa.c  $(SRC_DIR)/myrsa_math.c $(SRC_DIR)/big_number.c
 demo_rsa_sign_SOURCES=$(SRC_DIR)/demo_rsa_sign.c $(SRC_DIR)/myrsa.c $(SRC_DIR)/myrsa_math.c $(SRC_DIR)/mycrc.c $(SRC_DIR)/big_number.c
 demo_rsa_verify_SOURCES=$(SRC_DIR)/demo_rsa_verify.c $(SRC_DIR)/myrsa.c $(SRC_DIR)/myrsa_math.c $(SRC_DIR)/mycrc.c $(SRC_DIR)/big_number.c
-
+myrsa_trapdoor_SOURCES=$(SRC_DIR)/myrsa_trapdoor.c $(SRC_DIR)/myrsa.c $(SRC_DIR)/myrsa_math.c $(SRC_DIR)/big_number.c
 # Convert source files to object files for each executable
 demo_rsa_keys_OBJECTS=$(demo_rsa_keys_SOURCES:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 demo_rsa_sign_OBJECTS=$(demo_rsa_sign_SOURCES:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 demo_rsa_verify_OBJECTS=$(demo_rsa_verify_SOURCES:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
+myrsa_trapdoor_OBJECTS=$(myrsa_trapdoor_SOURCES:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 
 TEST_BINARIES=test_myrsa test_myrsa_math test_mycrc
 test_myrsa_SOURCES=$(SRC_DIR)/test_myrsa.c $(SRC_DIR)/myrsa.c $(SRC_DIR)/myrsa_math.c $(SRC_DIR)/mySHA.c $(SRC_DIR)/big_number.c
@@ -51,6 +52,9 @@ demo_rsa_sign: $(demo_rsa_sign_OBJECTS)
 	$(CC) $(CFLAGS) $^ -o $(BIN_DIR)/$@
 
 demo_rsa_verify: $(demo_rsa_verify_OBJECTS)
+	$(CC) $(CFLAGS) $^ -o $(BIN_DIR)/$@
+
+myrsa_trapdoor: $(myrsa_trapdoor_OBJECTS)
 	$(CC) $(CFLAGS) $^ -o $(BIN_DIR)/$@
 
 pem2der: $(SRC_DIR)/pem2der.c
