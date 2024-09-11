@@ -22,22 +22,30 @@ enum OID_TYPE {
 	OID_TYPE_ECDSA_WITH_SHA256,
 	OID_TYPE_RSA,
 	OID_TYPE_RSA_ENCRYPTION,
+	OID_TYPE_SHA1_WITH_RSA_ENCRYPTION,
+	OID_TYPE_EMAIL_ADDRESS,
 	OID_TYPE_SHA256_WITH_RSA_ENCRYPTION,
 	OID_TYPE_EMBEDDED_SCTS,
 	OID_TYPE_AUTHORITY_INFO_ACCESS,
+	OID_TYPE_CPS,
+	OID_TYPE_UNOTICE,
 	OID_TYPE_SERVER_AUTH,
 	OID_TYPE_CLIENT_AUTH,
 	OID_TYPE_OCSP,
 	OID_TYPE_CA_ISSUERS,
 	OID_TYPE_COMMON_NAME,
 	OID_TYPE_COUNTRY_NAME,
+	OID_TYPE_LOCALITY_NAME,
+	OID_TYPE_STATE_OR_PROVINCE_NAME,
 	OID_TYPE_ORGANIZATION_NAME,
+	OID_TYPE_ORGANIZATIONAL_UNIT_NAME,
 	OID_TYPE_SUBJECT_KEY_IDENTIFIER,
 	OID_TYPE_KEY_USAGE,
 	OID_TYPE_SUBJECT_ALT_NAME,
 	OID_TYPE_BASIC_CONSTRAINTS,
 	OID_TYPE_CRL_DISTRIBUTION_POINTS,
 	OID_TYPE_CERTIFICATE_POLICIES,
+	OID_TYPE_ANY_POLICY,
 	OID_TYPE_AUTHORITY_KEY_IDENTIFIER,
 	OID_TYPE_EXT_KEY_USAGE,
 	OID_TYPE_DOMAIN_VALID,
@@ -137,6 +145,7 @@ int main(int argc, char *argv[])
 		ASN1_TAG_SET = 0x11,
 		ASN1_TAG_PRINTABLE_STRING = 0x13,
 		ASN1_TAG_VID_STRING = 0x15,
+		ASN1_TAG_IA5_STRING = 0x16,
 		ASN1_TAG_UTC = 0x17,
 		ASN1_TAG_GENERALIZED_TIME = 0x18,
 		ASN1_TAG_CONTEXT_SPECIFIC_0 = 0x80,
@@ -216,7 +225,8 @@ int main(int argc, char *argv[])
 			level_len_dec(1);
 		}
 
-		if (tag == ASN1_TAG_PRINTABLE_STRING || tag == ASN1_TAG_UTC ||
+		if (tag == ASN1_TAG_PRINTABLE_STRING ||
+		    tag == ASN1_TAG_IA5_STRING || tag == ASN1_TAG_UTC ||
 		    tag == ASN1_TAG_CONTEXT_SPECIFIC_2 ||
 		    tag == ASN1_TAG_CONTEXT_SPECIFIC_6) {
 			char printable_string[128];
@@ -305,6 +315,9 @@ const char *asn1_print_tag(uint8_t tag)
 	case 0x15:
 		ret = "VID STRING";
 		break;
+	case 0x16:
+		ret = "IA5 STRING";
+		break;
 	case 0x17:
 		ret = "UTC TIME";
 		break;
@@ -347,6 +360,9 @@ OID oid_database[] = {
 	{ 7, { 1, 2, 840, 10045, 4, 3, 2 }, "ecdsa-with-SHA256" }, /* RFC 5758 */
 	{ 4, { 1, 2, 840, 113549 }, "rsadsi" }, /* X.509 */
 	{ 7, { 1, 2, 840, 113549, 1, 1, 1 }, "rsaEncryption" }, /* RFC 4055 */
+	{ 7, { 1, 2, 840, 113549, 1, 1, 5 }, "sha1WithRSAEncryption" },
+	{ 7, { 1, 2, 840, 113549, 1, 9, 1 }, "emailAddress" }, /* RFC 5280 */
+
 	{ 7,
 	  { 1, 2, 840, 113549, 1, 1, 11 },
 	  "sha256WithRSAEncryption" }, /* RFC 4055 */
@@ -356,23 +372,29 @@ OID oid_database[] = {
 
 	/* RFC 5280 (X.509 2008)*/
 	{ 9, { 1, 3, 6, 1, 5, 5, 7, 1, 1 }, "id-pe-authorityInfoAccess" },
+	{ 9, { 1, 3, 6, 1, 5, 5, 7, 2, 1 }, "id-qt-cps" },
+	{ 9, { 1, 3, 6, 1, 5, 5, 7, 2, 2 }, "id-qt-unotice" },
 	{ 9, { 1, 3, 6, 1, 5, 5, 7, 3, 1 }, "id-kp-serverAuth" },
-	{ 9, { 1, 3, 6, 1, 5, 5, 7, 3, 2 }, "id-kp-clientAuth" },
+	{ 9, { 1, 3, 6, 1, 5, 5, 7, 3, 2 }, "id-kp-clientAuth " },
 	{ 9, { 1, 3, 6, 1, 5, 5, 7, 48, 1 }, "id-ad-ocsp" },
 	{ 9, { 1, 3, 6, 1, 5, 5, 7, 48, 2 }, "id-ad-caIssuers" },
 
 	/* X.520 */
 	{ 4, { 2, 5, 4, 3 }, "id-at-commonName" },
 	{ 4, { 2, 5, 4, 6 }, "id-at-countryName" },
+	{ 4, { 2, 5, 4, 7 }, "id-at-localityName" },
+	{ 4, { 2, 5, 4, 8 }, "id-at-stateOrProvinceName" },
 	{ 4, { 2, 5, 4, 10 }, "id-at-organizationName" },
+	{ 4, { 2, 5, 4, 11 }, "id-at-organizationalUnitName" },
 
-	/* X.509 */
+	/* X.509 RFC5280 */
 	{ 4, { 2, 5, 29, 14 }, "id-ce-subjectKeyIdentifier" },
 	{ 4, { 2, 5, 29, 15 }, "id-ce-keyUsage" },
 	{ 4, { 2, 5, 29, 17 }, "id-ce-subjectAltName" },
 	{ 4, { 2, 5, 29, 19 }, "id-ce-basicConstraints" },
 	{ 4, { 2, 5, 29, 31 }, "id-ce-RLDistributionPoints" },
 	{ 4, { 2, 5, 29, 32 }, "id-ce-certificatePolicies" },
+	{ 5, { 2, 5, 29, 32, 0 }, "id-ce-anyPolicy" },
 	{ 4, { 2, 5, 29, 35 }, "id-ce-authorityKeyIdentifier" },
 	{ 4, { 2, 5, 29, 37 }, "id-ce-extKeyUsage" },
 
