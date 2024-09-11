@@ -205,6 +205,8 @@ enum OID_TYPE {
 	OID_TYPE_CA_ISSUERS,
 	OID_TYPE_COMMON_NAME,
 	OID_TYPE_COUNTRY_NAME,
+	OID_TYPE_LOCALITY_NAME,
+	OID_TYPE_STATE_OR_PROVINCE_NAME,
 	OID_TYPE_ORGANIZATION_NAME,
 	OID_TYPE_SUBJECT_KEY_IDENTIFIER,
 	OID_TYPE_KEY_USAGE,
@@ -250,6 +252,8 @@ OID oid_database[] = {
 	/* X.520 */
 	{ 4, { 2, 5, 4, 3 }, "id-at-commonName" },
 	{ 4, { 2, 5, 4, 6 }, "id-at-countryName" },
+	{ 4, { 2, 5, 4, 7 }, "id-at-localityName" },
+	{ 4, { 2, 5, 4, 8 }, "id-at-stateOrProvinceName" },
 	{ 4, { 2, 5, 4, 10 }, "id-at-organizationName" },
 
 	/* X.509 */
@@ -396,6 +400,12 @@ void print_name(FILE *fp, int length)
 		switch (oid_type) {
 		case OID_TYPE_COUNTRY_NAME:
 			printf("C=");
+			break;
+		case OID_TYPE_LOCALITY_NAME:
+			printf("L=");
+			break;
+		case OID_TYPE_STATE_OR_PROVINCE_NAME:
+			printf("ST=");
 			break;
 		case OID_TYPE_ORGANIZATION_NAME:
 			printf("O=");
