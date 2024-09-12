@@ -98,9 +98,45 @@ void test_SHA256()
 	/* Add more test cases... */
 }
 
+void test_SHA1()
+{
+	uint32_t H[SHA1_WORD_COUNT];
+
+	char *message = "abc"; /* < 448 bits */
+	SHA1_compute_hash(message, strlen(message), H);
+	assert(H[0] == 0xa9993e36);
+	assert(H[1] == 0x4706816a);
+	assert(H[2] == 0xba3e2571);
+	assert(H[3] == 0x7850c26c);
+	assert(H[4] == 0x9cd0d89d);
+
+	/* = 448 bits */
+	char *message2 =
+		"abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq";
+	SHA1_compute_hash(message2, strlen(message2), H);
+	assert(H[0] == 0x84983e44);
+	assert(H[1] == 0x1c3bd26e);
+	assert(H[2] == 0xbaae4aa1);
+	assert(H[3] == 0xf95129e5);
+	assert(H[4] == 0xe54670f1);
+
+	/* > 448 bits */
+	char *message3 =
+		"This is a test message that is definitely longer than sixty-four characters.";
+	SHA1_compute_hash(message3, strlen(message3), H);
+	assert(H[0] == 0x8a277b82);
+	assert(H[1] == 0x3c087b6a);
+	assert(H[2] == 0xbf7d731f);
+	assert(H[3] == 0x5ec715ba);
+	assert(H[4] == 0x3cf577ad);
+
+	/* Add more test cases... */
+}
+
 void test_SHA()
 {
 	test_SHA256();
+	test_SHA1();
 
 	/* Add more test cases... */
 }

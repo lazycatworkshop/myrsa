@@ -16,4 +16,15 @@ enum {
 
 void SHA256_compute_hash(char msg[], size_t len, uint32_t H[]);
 
+/* SHA-1 */
+enum {
+	SHA1_BLOCK_SIZE = 512, /* bits */
+	SHA1_WORD_SIZE = 32, /* bits */
+	SHA1_DIGEST_SIZE = 160, /* bits */
+	SHA1_WORD_COUNT = (SHA1_DIGEST_SIZE / SHA1_WORD_SIZE)
+};
+
+void SHA1_compute_hash(char msg[], size_t len, uint32_t H[]);
+void SHA1_get_digest(uint32_t H[], uint8_t digest[]);
+
 #endif /* SHA_H */

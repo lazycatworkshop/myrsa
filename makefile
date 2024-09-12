@@ -17,7 +17,7 @@ INC_DIR=include
 CCFLAG += -I$(INC_DIR)
 
 # Define executables and their specific source files
-EXECUTABLES=demo_rsa_keys demo_rsa_sign demo_rsa_verify pem2der asn1parse rsa_text_public_key x509_text_public_key x509_extract_tbs x509_extract_sig x509_extract_pubkey der2pem myrsa_sha256 myrsa_trapdoor
+EXECUTABLES=demo_rsa_keys demo_rsa_sign demo_rsa_verify pem2der asn1parse rsa_text_public_key x509_text_public_key x509_extract_tbs x509_extract_sig x509_extract_pubkey der2pem myrsa_sha256 myrsa_trapdoor myrsa_sha1
 demo_rsa_keys_SOURCES=$(SRC_DIR)/demo_rsa_keys.c $(SRC_DIR)/myrsa.c  $(SRC_DIR)/myrsa_math.c $(SRC_DIR)/big_number.c
 demo_rsa_sign_SOURCES=$(SRC_DIR)/demo_rsa_sign.c $(SRC_DIR)/myrsa.c $(SRC_DIR)/myrsa_math.c $(SRC_DIR)/mycrc.c $(SRC_DIR)/big_number.c
 demo_rsa_verify_SOURCES=$(SRC_DIR)/demo_rsa_verify.c $(SRC_DIR)/myrsa.c $(SRC_DIR)/myrsa_math.c $(SRC_DIR)/mycrc.c $(SRC_DIR)/big_number.c
@@ -82,6 +82,9 @@ der2pem: $(SRC_DIR)/der2pem.c
 	$(CC) $(CFLAGS) $^ -o $(BIN_DIR)/$@
 
 myrsa_sha256: $(SRC_DIR)/myrsa_sha256.c $(SRC_DIR)/mySHA.c
+	$(CC) $(CFLAGS) $^ -o $(BIN_DIR)/$@
+
+myrsa_sha1: $(SRC_DIR)/myrsa_sha1.c $(SRC_DIR)/mySHA.c
 	$(CC) $(CFLAGS) $^ -o $(BIN_DIR)/$@
 
 # Compile test sources into test binaries

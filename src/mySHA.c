@@ -147,8 +147,8 @@ void SHA256_init(uint32_t H[])
 	H[7] = 0x5BE0CD19;
 };
 
-/**
- * @brief Compute the SHA-256 hash of a message.
+/** 
+ * SHA256_compute_hash - Compute the SHA-256 hash of a message.
  * 
  * @param msg Message to be hashed.
  * @param len Length of the message in bytes.
@@ -195,10 +195,148 @@ void SHA256_compute_hash(char msg[], size_t len, uint32_t H[])
 	}
 };
 
+static int is_big_endian(void)
+{
+	union {
+		uint32_t i;
+		char c[4];
+	} test_union = { 0x01020304 };
+
+	return test_union.c[0] == 1;
+}
+
+/**
+ * SHA256_get_digest - get the digest from the hash value
+ * 
+ * @H: hash value
+ * @digest: digest
+ * 
+ * Concatenate hash values in big endian
+ */
 void SHA256_get_digest(uint32_t H[], uint8_t digest[])
 {
 	/* Concatenate hash values in big endian */
 	for (int i = 0; i < SHA256_WORD_COUNT; i++) {
+		digest[i * 4] = (H[i] >> 24) & 0xFF;
+		digest[i * 4 + 1] = (H[i] >> 16) & 0xFF;
+		digest[i * 4 + 2] = (H[i] >> 8) & 0xFF;
+		digest[i * 4 + 3] = H[i] & 0xFF;
+	}
+};
+
+/* SHA-1 */
+uint32_t SHA1_K[] = { 0x5A827999, 0x6ED9EBA1, 0x8F1BBCDC, 0xCA62C1D6 };
+
+uint32_t Parity(uint32_t x, uint32_t y, uint32_t z)
+{
+	return x ^ y ^ z;
+};
+
+uint32_t ROTL(uint32_t x, uint32_t n)
+{
+	return (x << n) | (x >> (32 - n));
+};
+
+void SHA1_process_block(uint32_t M[], uint32_t H[])
+{
+	uint32_t W[80]; /* message schedule */
+	uint32_t a, b, c, d, e; /* working variables */
+
+	int t;
+
+	for (t = 0; t < 16; t++) {
+		W[t] = M[t];
+	}
+
+	for (t = 16; t < 80; t++) {
+		W[t] = ROTL(W[t - 3] ^ W[t - 8] ^ W[t - 14] ^ W[t - 16], 1);
+	}
+
+	a = H[0];
+	b = H[1];
+	c = H[2];
+	d = H[3];
+	e = H[4];
+
+	for (t = 0; t < 80; t++) {
+		uint32_t T;
+		if (t < 20) {
+			T = ROTL(a, 5) + Ch(b, c, d) + e + SHA1_K[0] + W[t];
+		} else if (t < 40) {
+			T = ROTL(a, 5) + Parity(b, c, d) + e + SHA1_K[1] + W[t];
+		} else if (t < 60) {
+			T = ROTL(a, 5) + Maj(b, c, d) + e + SHA1_K[2] + W[t];
+		} else {
+			T = ROTL(a, 5) + Parity(b, c, d) + e + SHA1_K[3] + W[t];
+		}
+		e = d;
+		d = c;
+		c = ROTL(b, 30);
+		b = a;
+		a = T;
+	}
+
+	H[0] += a;
+	H[1] += b;
+	H[2] += c;
+	H[3] += d;
+	H[4] += e;
+};
+
+void SHA1_init(uint32_t H[])
+{
+	H[0] = 0x67452301;
+	H[1] = 0xEFCDAB89;
+	H[2] = 0x98BADCFE;
+	H[3] = 0x10325476;
+	H[4] = 0xC3D2E1F0;
+};
+
+void SHA1_compute_hash(char msg[], size_t len, uint32_t H[])
+{
+	SHA1_init(H);
+
+	uint32_t M[SHA1_BLOCK_SIZE / SHA1_WORD_SIZE]; /* message block */
+	size_t offset = 0; /* byte count for processed bytes */
+	size_t block_len; /* data bytes in a block */
+	while (offset < len) {
+		block_len = len - offset < sizeof(M) ? len - offset : sizeof(M);
+		memset(M, 0, sizeof(M));
+		for (size_t i = 0; i < block_len; i++) {
+			M[i / 4] |= (uint32_t)msg[offset + i]
+				    << (24 - 8 * (i % 4));
+		}
+
+		/* Padding */
+		if (block_len < 64) {
+			/* Bit value one after the last input byte */
+			M[block_len / 4] |= 0x80 << (24 - 8 * (block_len % 4));
+			if (block_len < 56) { /* Room for length bytes */
+				M[14] = (uint32_t)(len >> 29);
+				M[15] = (uint32_t)(len << 3);
+			} else { /* Not enough room */
+				SHA1_process_block(
+					M, H); /* complete current block */
+				offset += block_len;
+				memset(M, 0, 64); /* new block */
+				M[14] = (uint32_t)(len >> 29);
+				M[15] = (uint32_t)(len << 3);
+				SHA1_process_block(M, H);
+				break;
+			}
+		}
+		SHA1_process_block(M, H);
+		offset += block_len;
+	}
+};
+
+void SHA1_get_digest(uint32_t H[], uint8_t digest[])
+{
+	if (is_big_endian())
+		return;
+
+	/* Concatenate hash values in big endian */
+	for (int i = 0; i < SHA1_WORD_COUNT; i++) {
 		digest[i * 4] = (H[i] >> 24) & 0xFF;
 		digest[i * 4 + 1] = (H[i] >> 16) & 0xFF;
 		digest[i * 4 + 2] = (H[i] >> 8) & 0xFF;
