@@ -411,6 +411,10 @@ void print_name(FILE *fp, int length)
 	int offset1, offset2 = 0;
 	while (length) {
 		offset1 = ftell(fp);
+		asn1_find_tag(fp, ASN1_TAG_SET);
+		asn1_get_length(fp);
+		asn1_find_tag(fp, ASN1_TAG_SEQUENCE);
+		asn1_get_length(fp);
 		asn1_find_tag(fp, ASN1_TAG_OBJECT_IDENTIFIER);
 		int l = asn1_get_length(fp);
 		int oid_type = get_oid(fp, l);
@@ -712,14 +716,52 @@ void print_extensions(FILE *fp, int length)
 		switch (oid_type) {
 		case OID_TYPE_AUTHORITY_KEY_IDENTIFIER:
 			asn1_get_length(fp);
-			asn1_find_tag(fp, ASN1_TAG_SEQUENCE);
-			asn1_get_length(fp);
-			asn1_find_tag(fp, ASN1_TAG_CONTEXT_SPECIFIC_0);
+			asn1_find_tag(
+				fp,
+				ASN1_TAG_SEQUENCE); /* AuthorityKeyIdentifier */
 			l = asn1_get_length(fp);
-			for (int i = 0; i < l; i++) {
-				printf("%02x ", getc(fp));
+			while (l) {
+				int offset11 = ftell(fp);
+				int c = getc(fp);
+				switch (c & ASN1_TAG_MASK) {
+				case ASN1_TAG_CONTEXT_SPECIFIC_0: /* [0] keyIdentifier */
+					int ll = asn1_get_length(fp);
+					for (int i = 0; i < ll; i++) {
+						printf("%02x ", getc(fp));
+					}
+					printf("\n");
+					break;
+				case ASN1_TAG_CONTEXT_SPECIFIC_1: /* [1] authorityCertIssuer */
+					asn1_get_length(fp);
+					c = getc(fp);
+					switch (c & ASN1_TAG_MASK) {
+					case ASN1_TAG_CONTEXT_SPECIFIC_4: /* [4] directoryName */
+						asn1_get_length(fp);
+						asn1_find_tag(
+							fp, ASN1_TAG_SEQUENCE);
+						ll = asn1_get_length(fp);
+						printf("Directory Name: ");
+						print_name(fp, ll);
+						break;
+					default:
+						break;
+					}
+					break;
+				case ASN1_TAG_CONTEXT_SPECIFIC_2: /* [2] authorityCertSerialNumber */
+					ll = asn1_get_length(fp);
+					printf("Serial Number: ");
+					for (int i = 0; i < ll; i++) {
+						printf("%02x ", getc(fp));
+					}
+					printf("\n");
+					break;
+				default:
+					break;
+				}
+				int offset22 = ftell(fp);
+				l -= offset22 - offset11;
 			}
-			printf("\n");
+
 			break;
 		case OID_TYPE_SUBJECT_KEY_IDENTIFIER:
 			asn1_get_length(fp);
@@ -813,31 +855,31 @@ void print_extensions(FILE *fp, int length)
 			}
 			flag >>= unused_bits;
 			if (flag & 0x01) {
-				printf("Digital Signature, ");
+				printf("digitalSignature, ");
 			}
 			if (flag & 0x02) {
-				printf("Non Repudiation, ");
+				printf("contentCommitment, ");
 			}
 			if (flag & 0x04) {
-				printf("Key Encipherment, ");
+				printf("keyEncipherment, ");
 			}
 			if (flag & 0x08) {
-				printf("Data Encipherment, ");
+				printf("dataEncipherment, ");
 			}
 			if (flag & 0x10) {
-				printf("Key Agreement, ");
+				printf("keyAgreement, ");
 			}
 			if (flag & 0x20) {
-				printf("Key Cert Sign, ");
+				printf("keyCertSign, ");
 			}
 			if (flag & 0x40) {
-				printf("CRL Sign, ");
+				printf("cRLSign, ");
 			}
 			if (flag & 0x80) {
-				printf("Encipher Only, ");
+				printf("encipherOnly, ");
 			}
 			if (flag & 0x100) {
-				printf("Decipher Only, ");
+				printf("decipherOnly, ");
 			}
 			printf("\n");
 			break;
