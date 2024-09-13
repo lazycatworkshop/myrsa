@@ -874,7 +874,23 @@ void print_extensions(FILE *fp, int length)
 							print_printable_string(
 								fp, llll);
 							break;
-						default: /* UseNotice */
+						case ASN1_TAG_SEQUENCE: /* UserNotice */
+							asn1_get_length(fp);
+							c = getc(fp);
+							if (c !=
+							    ASN1_TAG_SEQUENCE) /* explicitText */
+							{
+								print_printable_string(
+									fp,
+									asn1_get_length(
+										fp));
+								break;
+
+							} else { /* noticeRef */
+								/* TBD, fall through the default case */
+							}
+
+						default:
 							llll = asn1_get_length(
 								fp);
 							for (int i = 0;
