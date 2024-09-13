@@ -54,6 +54,7 @@ enum OID_TYPE {
 	OID_TYPE_ANY_POLICY,
 	OID_TYPE_AUTHORITY_KEY_IDENTIFIER,
 	OID_TYPE_EXT_KEY_USAGE,
+	OID_TYPE_EV_SSL_CERTIFICATES,
 	OID_TYPE_DOMAIN_VALID,
 	/* Add more OIDs as needed */
 
@@ -419,6 +420,9 @@ OID oid_database[] = {
 	{ 5, { 2, 5, 29, 32, 0 }, "id-ce-anyPolicy" },
 	{ 4, { 2, 5, 29, 35 }, "id-ce-authorityKeyIdentifier" },
 	{ 4, { 2, 5, 29, 37 }, "id-ce-extKeyUsage" },
+
+	/* Digicert (11412) */
+	{ 7, { 2, 16, 840, 1, 114412, 2, 1 }, "ev-ssl-certificates(2) 1" },
 
 	{ 6, { 2, 23, 140, 1, 2, 1 }, "domain-validated" },
 

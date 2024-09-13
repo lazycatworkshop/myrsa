@@ -232,6 +232,8 @@ enum OID_TYPE {
 	OID_TYPE_ANY_POLICY,
 	OID_TYPE_AUTHORITY_KEY_IDENTIFIER,
 	OID_TYPE_EXT_KEY_USAGE,
+	OID_TYPE_EV_SSL_CERTIFICATES,
+	OID_TYPE_EV_GUIDELINES,
 	OID_TYPE_DOMAIN_VALID,
 	/* Add more OIDs as needed */
 
@@ -305,6 +307,10 @@ OID oid_database[] = {
 	{ 4, { 2, 5, 29, 35 }, "id-ce-authorityKeyIdentifier" },
 	{ 4, { 2, 5, 29, 37 }, "id-ce-extKeyUsage" },
 
+	/* Digicert (11412) */
+	{ 7, { 2, 16, 840, 1, 114412, 2, 1 }, "ev-ssl-certificates(2) 1" },
+
+	{ 5, { 2, 23, 140, 1, 1 }, "ev-guidelines" },
 	{ 6, { 2, 23, 140, 1, 2, 1 }, "domain-validated" },
 
 	/* Add more OIDs as needed */
@@ -388,6 +394,12 @@ int get_oid(FILE *fp, int length)
 
 	decode_asn1_oid(asn1_oid_value, length, oid_value, &oid_len);
 	int oid_type = asn1_lookup_oid(oid_value, oid_len);
+
+	if (oid_type == OID_TYPE_UNKNOWN) {
+		printf("Unknown ");
+		print_oid(oid_value, oid_len);
+		printf("\n");
+	}
 
 	return oid_type;
 }
@@ -831,8 +843,10 @@ void print_extensions(FILE *fp, int length)
 					int lll = asn1_get_length(fp);
 					int oid_type = get_oid(
 						fp, lll); /* CertPolicyId */
-					print_oid_desc(oid_type);
-					printf("\n");
+					if (oid_type != OID_TYPE_UNKNOWN) {
+						print_oid_desc(oid_type);
+						printf("\n");
+					}
 					int offset22 = ftell(fp);
 					ll -= offset22 - offset11;
 					if (!ll) { /* PolicyQualifiers is optional */
