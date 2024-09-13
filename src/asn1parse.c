@@ -55,6 +55,7 @@ enum OID_TYPE {
 	OID_TYPE_AUTHORITY_KEY_IDENTIFIER,
 	OID_TYPE_EXT_KEY_USAGE,
 	OID_TYPE_EV_SSL_CERTIFICATES,
+	OID_TYPE_EV_GUIDELINES,
 	OID_TYPE_DOMAIN_VALID,
 	/* Add more OIDs as needed */
 
@@ -424,6 +425,7 @@ OID oid_database[] = {
 	/* Digicert (11412) */
 	{ 7, { 2, 16, 840, 1, 114412, 2, 1 }, "ev-ssl-certificates(2) 1" },
 
+	{ 5, { 2, 23, 140, 1, 1 }, "ev-guidelines" },
 	{ 6, { 2, 23, 140, 1, 2, 1 }, "domain-validated" },
 
 	/* Add more OIDs as needed */
