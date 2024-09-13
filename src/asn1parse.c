@@ -24,6 +24,9 @@ enum OID_TYPE {
 	OID_TYPE_RSA_ENCRYPTION,
 	OID_TYPE_SHA1_WITH_RSA_ENCRYPTION,
 	OID_TYPE_EMAIL_ADDRESS,
+	OID_TYPE_JURISDICTION_OF_INCORPORATION_LOCALITY_NAME,
+	OID_TYPE_JURISDICTION_OF_INCORPORATION_STATE_OR_PROVINCE_NAME,
+	OID_TYPE_JURISDICTION_OF_INCORPORATION_COUNTRY_NAME,
 	OID_TYPE_SHA256_WITH_RSA_ENCRYPTION,
 	OID_TYPE_EMBEDDED_SCTS,
 	OID_TYPE_AUTHORITY_INFO_ACCESS,
@@ -362,6 +365,17 @@ OID oid_database[] = {
 	{ 7, { 1, 2, 840, 113549, 1, 1, 1 }, "rsaEncryption" }, /* RFC 4055 */
 	{ 7, { 1, 2, 840, 113549, 1, 1, 5 }, "sha1WithRSAEncryption" },
 	{ 7, { 1, 2, 840, 113549, 1, 9, 1 }, "emailAddress" }, /* RFC 5280 */
+
+	/* 311 - Microsoft */
+	{ 11,
+	  { 1, 3, 6, 1, 4, 1, 311, 60, 2, 1, 1 },
+	  "jurisdictionOfIncorporationLocalityName" },
+	{ 11,
+	  { 1, 3, 6, 1, 4, 1, 311, 60, 2, 1, 2 },
+	  "jurisdictionOfIncorporationStateOrProvinceName" },
+	{ 11,
+	  { 1, 3, 6, 1, 4, 1, 311, 60, 2, 1, 3 },
+	  "jurisdictionOfIncorporationCountryName" },
 
 	{ 7,
 	  { 1, 2, 840, 113549, 1, 1, 11 },
