@@ -215,11 +215,13 @@ enum OID_TYPE {
 	OID_TYPE_OCSP,
 	OID_TYPE_CA_ISSUERS,
 	OID_TYPE_COMMON_NAME,
+	OID_TYPE_SERIAL_NUMBER,
 	OID_TYPE_COUNTRY_NAME,
 	OID_TYPE_LOCALITY_NAME,
 	OID_TYPE_STATE_OR_PROVINCE_NAME,
 	OID_TYPE_ORGANIZATION_NAME,
 	OID_TYPE_ORGANIZATIONAL_UNIT_NAME,
+	OID_TYPE_BUSINESS_CATEGORY,
 	OID_TYPE_SUBJECT_KEY_IDENTIFIER,
 	OID_TYPE_KEY_USAGE,
 	OID_TYPE_SUBJECT_ALT_NAME,
@@ -280,11 +282,13 @@ OID oid_database[] = {
 
 	/* X.520 */
 	{ 4, { 2, 5, 4, 3 }, "id-at-commonName" },
+	{ 4, { 2, 5, 4, 5 }, "id-at-serialNumber" },
 	{ 4, { 2, 5, 4, 6 }, "id-at-countryName" },
 	{ 4, { 2, 5, 4, 7 }, "id-at-localityName" },
 	{ 4, { 2, 5, 4, 8 }, "id-at-stateOrProvinceName" },
 	{ 4, { 2, 5, 4, 10 }, "id-at-organizationName" },
 	{ 4, { 2, 5, 4, 11 }, "id-at-organizationalUnitName" },
+	{ 4, { 2, 5, 4, 15 }, "id-at-businessCategory" },
 
 	/* X.509 RFC5280 */
 	{ 4, { 2, 5, 29, 14 }, "id-ce-subjectKeyIdentifier" },
@@ -465,6 +469,12 @@ void print_name(FILE *fp, int length)
 			break;
 		case OID_TYPE_EMAIL_ADDRESS:
 			printf("E=");
+			break;
+		case OID_TYPE_BUSINESS_CATEGORY:
+			printf("BC=");
+			break;
+		case OID_TYPE_SERIAL_NUMBER:
+			printf("SN=");
 			break;
 		default:
 			printf("Unknown=");
