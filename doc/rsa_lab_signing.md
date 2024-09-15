@@ -2,7 +2,7 @@
 
 # Preparation
 
-We will use openssl utility to perform operations. Here is an example to install the package with Debian/Ubuntu:
+We will use openssl utility in this exercise. Here is an example to install the package with Debian/Ubuntu:
 
 ```sh
 sudo apt update
@@ -18,7 +18,7 @@ openssl version
 
 ## Generate a private key
 
-First we ask openssl to generate an RSA private key at the length of 512 bits which is the shortest one allowed by openssl. That short key is only to facilitate the demonstration and is not recommended in real applications.
+First we ask openssl to generate an RSA private key at the length of 512 bits which is the shortest one allowed by openssl. That short key length is only to facilitate the demonstration and is not recommended in real applications.
 
 ```console
 $ openssl genrsa -out private.key 512
@@ -36,7 +36,7 @@ Wt28UNHSM34g
 $ 
 ```
 
-This first and last line are encapsulation boundaries, EB, as defined in RFC934 and adapted by RFC1421, Privacy Enhanced Mail (PEM).
+This first and last line are encapsulation boundaries, EB [RFC934] and the contend is transformed by the standard of Privacy Enhanced Mail (PEM) [RFC1421].
 
 The structure looks like as follows:
 
@@ -48,7 +48,7 @@ The structure looks like as follows:
 -----END PRIVATE KEY-----
 ```
 
-PEM helps transfer data through systems which do not accept the 8-bit data such aS emails. Now that we know it is a PEM file, change the name accordingly:
+Printable characters can be transfer across systems which uses different data format internally , for example, attachments in emails. Now that we know it is a PEM file, change the name accordingly:
 
 ```sh
 mv private.key private_key.pem
@@ -97,16 +97,16 @@ coefficient:
 $ 
 ```
 
-The modulus has 65 bytes instead of 64 bytes for 512-bit key because the MSB is A2 in hex which has an 1 at the most significant bit and which presents a negative number. ANS.1 rules add a leading zero to avoid ambiguity.
+The result has the private key: the private exponent and the modulus. The modulus has 65 bytes instead of 64 bytes for a 512-bit key because the MSB is A2 in hex which has an 1 at the most significant bit and which presents a negative number. ANS.1 rules add a leading zero to avoid ambiguity.
 
 The publicExponent is 65537 which is commonly adapted in the industry, so we don't need a separate step to generate a public key.
 
-The exponent1, exponent2, and coefficient are used in the Chinese Remainder Theorem (CRT) to optimize RSA decryption. openssl use CRT for its performance.
+The rest components are used for optimization of RSA encryptions and decryptions and are not covered in this exercise.
 
 ## Sign the document
 
 ### Create a hash of the document
-A unique characteristic, like a fingerprint, provides the proof of the document integrity as we mention in another article in which we use a checksum, CRC-32. But CRC-32 checksum is not a strong representative, given the limited range, and is not seen in practice. Typically we use more sophisticate methods such as Secure Hash Algorithms. Here we choose SHA-256 which will be less than the 512-bit modulus.
+A unique characteristic, like a fingerprint, provides the proof of the document integrity as we mention in another article in which we use a checksum, CRC-32. But CRC-32 checksum is not a strong representative, given the limited range, and is not seen in practice. Typically we prefer more sophisticate methods such as Secure Hash Algorithms. Here we choose SHA-256 [FIPS 180-4] which has the result of 256 bits, less than the 512-bit modulus.
 
 The result is a set of hash values and if we concatenate them together we have a 'digest'.
 
@@ -121,7 +121,7 @@ $ cat msg.dgst
 SHA2-256(msg.txt)= 0ba904eae8773b70c75333db4de2f3ac45a8ad4ddba1b242f0b3cfc199391dd8
 $
 ```
-The number string after ')= ' is the SAH-256 hash and is usually called digest. We can also directly generate the hash in binary:
+The number string after ')= ' is the SAH-256 digest. We can also directly generate the digest in binary:
 
 ```console
 $ openssl dgst -sha256 -binary -out msg.dgst msg.txt
@@ -132,16 +132,13 @@ $ hexdump -C msg.dgst
 $ 
 ```
 
-The digest of SHA-256 has 256 bits which is 64 bytes. 
-
-
 ### Sign the hash
 
 The digest marks the fingerprint of the document but how do we know it is really from the person we expect? In the physical world, we have signatures and we can check those against the signer's writing if there are any suspicion.
 
-Thanks to RSA, we can perform the one-direction process against the fingerprint like we put our signature on papers. Same the CRC-32 value we mentioned, the signing object, a digest here, is also treated as an integer. The digest is just much bigger, so called a big numbers which is stored in a set of individual byte-size integers and that the most significant bit is the bit 7 at the first byte. It is what we see in the text version of the digest. Similarly, the keys are also big numbers.
+Thanks to RSA, we can apply a one-way process to the fingerprint, similar to placing a signature on a document. Like the CRC-32 value previously mentioned, the signed object—a digest in this case—is treated as an integer, but much larger. This is known as a 'big number,' which is stored as a sequence of byte-sized integers, where the most significant bit is bit 7 of the first byte. It is what we see in the text version of the digest. Similarly, the keys are also big numbers.
 
-We can use openssl's pkeyutl command to sign a message, which is the digest in the case:
+We use openssl's pkeyutl command to sign a message, which is the digest in the case:
 
 ```console
 $ openssl pkeyutl -sign -inkey private_key.pem -in msg.dgst -out msg.sig
@@ -154,7 +151,7 @@ $ hexdump -C msg.sig
 $ 
 ```
 
-We have a 512-bit private key, which means a 512-bit modulus, hence the signature of 512 bits (64 bytes).
+We have a 512-bit private key, which corresponds to a 512-bit modulus, resulting in a 512-bit (64-byte) signature.
 
 ## Verify the document
 
@@ -162,7 +159,7 @@ We have a 512-bit private key, which means a 512-bit modulus, hence the signatur
 
 We used the private key to sign the digest and now we need another key to do the RSA one-way function to convert the signature back to the digest. The verification takes the public key. 
 
-The private key file generated by openssl rsa command also have the public exponent, because it is just a 'small' integer, 65537 and the modulus is common for both keys. Private keys, however, shall not leave the safe enclaves. Therefore we extract the public key information for the recipients:
+The private key file generated by openssl rsa command also have the public exponent, because it is just a 'small' integer, 65537 and the modulus is common for both keys. Private keys, however, shall not leave the safe enclaves. Therefore we draw out the public key information for the recipients:
 
 ```console
 $ openssl rsa -in private_key.pem -pubout -out public_key.pem
@@ -175,7 +172,7 @@ YUIotuAKDF72dkV5e6KR+P52F/yeCrMyyKlpY0/b0UmxpObrN5gPfW8CAwEAAQ==
 $ 
 ```
 
-Similar to what we did previously for the private key, We can use openssl to display the public key in text:
+Similar to what we did previously for the private key, We use openssl to display the public key in text:
 
 ```console
 $ openssl rsa -text -in public_key.pem -noout
@@ -199,7 +196,7 @@ $ hexdump -C public_key.der
 0000005e
 ```
 
-DER, Distinguished Encoding Rules, is defined in ASN.1, Abstract Syntax Notation One, which provides a notation defining the syntax of various data. The encoded data are in binary ready to be used for processing.
+DER, Distinguished Encoding Rules[X.680], which provides a notation defining the syntax of various data. The data are in binary ready for processing.
 
 The first byte, 30 hex, is a tag of SEQUENCE:
 
@@ -213,7 +210,7 @@ $ openssl asn1parse -inform DER -in public_key.der
 $ 
 ```
 
-Now we can have openssl present the public key in text:
+Now we have openssl present the public key in text:
 
 ```console
 $ openssl rsa -text -pubin -inform DER -in public_key.der -noout
@@ -240,7 +237,7 @@ $
 ```
 
 ### Verify the signature
-Then the recipient performs the RSA process to the signature received along with the message by the public key and compares result to the digest computed over the received message:
+Then the recipient performs the RSA process to the signature received along with the message by the public key and compares result to the digest of the received message:
 
 ```console
 $ openssl pkeyutl -verify -pubin -inkey public_key.pem -in msg.dgst.1 -sigfile msg.sig 
