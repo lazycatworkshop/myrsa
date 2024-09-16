@@ -37,11 +37,11 @@ void generate_RSA_keys(uint64_t p, uint64_t q, uint64_t *n, uint64_t *e,
 	if (max(p, q) > 65535)
 		*e = 65537; /* Use common public key for cases of big prime
 				 numbers */
-	else
+	else {
 		*e = max(p, q) + 1;
-
-	while (gcd(phi, *e) != 1)
-		(*e)++;
+		while (gcd(phi, *e) != 1)
+			(*e)++;
+	}
 
 	/* Another integer d is the multiplicative inverse of e, modulo (p - 1)
 	 * * (q - 1).
