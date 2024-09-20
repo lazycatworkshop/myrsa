@@ -106,7 +106,7 @@ The rest components are used for optimization of RSA encryptions and decryptions
 ## Sign the document
 
 ### Create a hash of the document
-A unique characteristic, like a fingerprint, provides the proof of the document integrity as we mention in another article in which we use a checksum, CRC-32. But CRC-32 checksum is not a strong representative, given the limited range, and is not seen in practice. Typically we prefer more sophisticate methods such as Secure Hash Algorithms. Here we choose SHA-256 [FIPS 180-4] which has the result of 256 bits, less than the 512-bit modulus.
+A unique characteristic, similar to a fingerprint, serves as a document's identity. For example, checksums like CRC-32 map documents to 32-bit integers. However, CRC-32 is not robust enough for practical cryptographic applications due to its limited representation and vulnerability to collisions. Instead, more sophisticated methods, such as Secure Hash Algorithms (SHA), are commonly used. In this case, we choose SHA-256 [FIPS 180-4], which offers a 256-bit output. Theoretically, it would require generating approximately $2^{128}$ hashes before encountering a collision. This output is smaller than the 512-bit modulus which guarantees the correctness of the process. 
 
 The result is a set of hash values and if we concatenate them together we have a 'digest'.
 
