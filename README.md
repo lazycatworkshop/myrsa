@@ -2,12 +2,6 @@
 
 This project implements RSA public-key cryptography in C. It includes utilities for generating RSA keys, signing messages, and verifying message signatures. This implementation serves as an educational tool for understanding the basics of RSA cryptography and its application in secure communication.
 
-## Features
-
-- **Key Generation**: Generate RSA public and private keys.
-- **Signing**: Sign messages using a private key.
-- **Verification**: Verify the authenticity of messages using the corresponding public key.
-
 ## Getting Started
 
 ### Prerequisites
@@ -19,9 +13,6 @@ This project implements RSA public-key cryptography in C. It includes utilities 
 ```bash
 git clone https://github.com/lazycatworkshop/myrsa.git
 ```
-```bash
-git clone git@github.com:lazycatworkshop/myrsa.git
-```
 
 ### Building the Project
 
@@ -30,40 +21,63 @@ To build the project, run the following command in the terminal:
 ```sh
 make all
 ```
-This will compile the source files and generate the executable files in the bin/ directory.
+This will compile the source files and generate the executable files.
+
+To build the project with debug symbols:
+```sh
+make DEBUG=1
+```
+
+To remove the executables:
+```console
+$ make clean
+rm -rf obj/* bin/* test/*
+$ 
+```
+
+To remove the directories created by the build process:
+```console
+$ make clean_dir
+rm -rf obj bin test
+$ 
+```
 
 ## Directories
 
 - **`/src`**: The source code.
 
-- **`/bin`**: The executable files that are created from the source code.
-
 - **`/include`**: The header files.
 
 - **`/doc`**: The documents.
 
-## Demonstrations
+Created directories by the build process:
 
-### Generate RSA keys
-```bash
-./bin/demo_rsa_keys
-```
-### Signing a Message
-```bash
-./bin/demo_rsa_sign --key <private_key> --modulus <modulus> --message-file <message_file>
-```
-### Verifing a Message
-```bash
-./bin/demo_rsa_verify --key <public_key> --modulus <modulus> --message-file <message_file> --signature <signature>
-```
-### Convert a PEM file to a DER file
-```bash
-./bin/pem2der -p pemfile -d derfile
-```
+- **`/obj`**: The object files.
+- **`/bin`**: The executables except for unit tests.
+- **`/test`**: The executables for unit tests.
 
-## Acknowledgments
+## Development environment
+- Raspberry Pi 4B, 4GB memory
+- OS:
+```console
+$ uname -a
+Linux fortest 6.6.31+rpt-rpi-v8 #1 SMP PREEMPT Debian 1:6.6.31-1+rpt1 (2024-05-29) aarch64 GNU/Linux
+$
+```
+- Compiler
+```text
+gcc version 12.2.0 (Debian 12.2.0-14) 
+```
+- make
+```console
+$ make -v
+GNU Make 4.3
+Built for aarch64-unknown-linux-gnu
+```
+- Microsoft Visual Studio Code
 
-This material is for educational purposes and not recommended for production use.
+
+## Disclaimer
 
 This material is provided "as is" without any warranty of any kind, express or implied. By using this material, you acknowledge and agree that you are solely responsible for any and all consequences arising from its use. The creators, contributors, and distributors of this material make no representations or warranties regarding its accuracy, completeness, or fitness for any particular purpose.
 
