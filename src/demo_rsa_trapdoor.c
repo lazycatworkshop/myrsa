@@ -31,7 +31,7 @@ int main(int argc, char *argv[])
 			break;
 		default: /* '?' */
 			fprintf(stderr,
-				"Usage: %s -m <message> -k <key> -d <modulus>\n",
+				"Usage: %s -m <message> -k <key> -n <modulus>\n",
 				argv[0]);
 			return EXIT_FAILURE;
 		}
@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
 
 	if (!key || !message || !modulus) {
 		fprintf(stderr,
-			"Usage: %s -m <message> -k <key> -d <modulus>\n",
+			"Usage: %s -m <message> -k <key> -n <modulus>\n",
 			argv[0]);
 		return EXIT_FAILURE;
 	}
