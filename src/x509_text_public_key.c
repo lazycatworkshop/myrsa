@@ -55,7 +55,6 @@ int asn1_get_length(FILE *fp);
 int get_oid(FILE *fp, int length);
 void print_oid_desc(int oid_type);
 void print_name(FILE *fp, int length);
-void print_utc_time(char *utc_str);
 void print_public_key_info(FILE *fp);
 void print_rsa_public_key(FILE *fp);
 void print_extensions(FILE *fp, int length);
@@ -508,6 +507,39 @@ void print_name(FILE *fp, int length)
 	printf("\n");
 }
 
+/** print_utc_time - print the UTC time included in the input character string to
+ *  the stdout as readable text
+ * 
+ * @utc_str: input string containing the UTC time 
+ * 
+ * */
+void print_utc_time(char *utc_str)
+{
+	int year, month, day, hour, minute, second;
+
+	// Extract the time components from the UTC string
+	sscanf(utc_str, "%2d%2d%2d%2d%2d%2d", &year, &month, &day, &hour,
+	       &minute, &second);
+
+	// Assuming the year is in the 21st century (20xx)
+	year += 2000;
+
+	// Month names
+	const char *months[] = {
+		"January",   "February", "March",    "April",
+		"May",	     "June",	 "July",     "August",
+		"September", "October",	 "November", "December"
+	};
+
+	// Print the formatted date and time
+	printf("%d%s %s %d, %02d:%02d:%02d UTC\n", day,
+	       (day == 1 || day == 21 || day == 31) ? "st" :
+	       (day == 2 || day == 22)		    ? "nd" :
+	       (day == 3 || day == 23)		    ? "rd" :
+						      "th",
+	       months[month - 1], year, hour, minute, second);
+}
+
 void print_validity(FILE *fp, size_t length)
 {
 	int tag = getc(fp);
@@ -535,7 +567,12 @@ void print_validity(FILE *fp, size_t length)
 		} else {
 			printf("    notAfter\t: ");
 		}
-		printf("%s\n", time_str);
+		if (tag == ASN1_TAG_UTC) {
+			print_utc_time(time_str);
+		} else if (tag == ASN1_TAG_GENERALIZED_TIME) {
+			printf("%s\n", time_str);
+		}
+
 		offset2 = ftell(fp);
 		length -= offset2 - offset1;
 	}
