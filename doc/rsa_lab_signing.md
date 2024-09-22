@@ -97,7 +97,7 @@ coefficient:
 $ 
 ```
 
-The result has the private key: the private exponent and the modulus. The modulus has 65 bytes instead of 64 bytes for a 512-bit key because the MSB is A2 in hex which has an 1 at the most significant bit and which presents a negative number. ANS.1 rules add a leading zero to avoid ambiguity.
+The result has the private key: the private exponent and the modulus. The modulus has 65 bytes instead of 64 bytes for a 512-bit key because the MSB is A2 in hex which has an 1 at the most significant bit and which presents a negative number. A leading zero is to avoid ambiguity [X.690].
 
 The publicExponent is 65537 which is commonly adapted in the industry, so we don't need a separate step to generate a public key.
 
@@ -196,7 +196,7 @@ $ hexdump -C public_key.der
 0000005e
 ```
 
-DER, Distinguished Encoding Rules[X.680], which provides a notation defining the syntax of various data. The data are in binary ready for processing.
+DER, Distinguished Encoding Rules[X.690], which provides a notation defining the syntax of various data. The data are in binary ready for processing.
 
 The first byte, 30 hex, is a tag of SEQUENCE:
 
@@ -281,7 +281,12 @@ $ hexdump -C msg.dgst
 $ 
 ```
 
+## References
 
-
+1. OpenSSL. (n.d.). OpenSSL: The Open Source toolkit for SSL/TLS. Retrieved from https://www.openssl.org/
+2. [RFC934] - Crocker, D. H. (1985). Standard for the format of ARPA Internet text messages. Retrieved from https://tools.ietf.org/html/rfc934
+3. [RFC1421] - Linn, J. (1993). Privacy Enhancement for Internet Electronic Mail: Part I: Message Encryption and Authentication Procedures. Retrieved from https://tools.ietf.org/html/rfc1421
+4. [X.690] - ITU-T Recommendation X.690: Information Technology - ASN.1 encoding rules: Specification of Basic Encoding Rules (BER), Canonical Encoding Rules (CER) and Distinguished Encoding Rules (DER). Retrieved from https://www.itu.int/rec/T-REC-X.690
+5. [FIPS 180-4] - National Institute of Standards and Technology. (2015). Secure Hash Standard (SHS). Retrieved from https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.180-4.pdf
 
 
