@@ -29,7 +29,8 @@ EXECUTABLES=demo_rsa_keys \
 	    x509_extract_pubkey \
 	    der2pem myrsa_sha256 \
 	    myrsa_trapdoor \
-	    myrsa_sha1
+	    myrsa_sha1 \
+	    csr_text
 	    
 demo_rsa_keys_SOURCES=$(SRC_DIR)/demo_rsa_keys.c $(SRC_DIR)/myrsa.c  $(SRC_DIR)/myrsa_math.c $(SRC_DIR)/big_number.c
 demo_rsa_sign_SOURCES=$(SRC_DIR)/demo_rsa_sign.c $(SRC_DIR)/myrsa.c $(SRC_DIR)/myrsa_math.c $(SRC_DIR)/mycrc.c $(SRC_DIR)/big_number.c
@@ -93,6 +94,9 @@ x509_extract_sig: $(SRC_DIR)/x509_extract_sig.c
 	$(CC) $(CFLAGS) $^ -o $(BIN_DIR)/$@
 
 x509_extract_pubkey: $(SRC_DIR)/x509_extract_pubkey.c
+	$(CC) $(CFLAGS) $^ -o $(BIN_DIR)/$@
+
+csr_text: $(SRC_DIR)/csr_text.c
 	$(CC) $(CFLAGS) $^ -o $(BIN_DIR)/$@
 
 der2pem: $(SRC_DIR)/der2pem.c
