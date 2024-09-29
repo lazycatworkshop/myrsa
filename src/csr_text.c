@@ -53,6 +53,7 @@ int get_version(FILE *fp);
 void print_name(FILE *fp, int length);
 void print_public_key_info(FILE *fp);
 void print_attributes(FILE *fp, int length);
+void print_signature(FILE *fp);
 
 int main(int argc, char *argv[])
 {
@@ -125,7 +126,7 @@ int main(int argc, char *argv[])
 	printf("PKCS #10 Certificate Request\n\n");
 
 	int version = get_version(fp);
-	printf("  Version: v%1d\n", version + 1); /* 0=v1 */
+	printf("  version: v%1d\n", version + 1); /* 0=v1 */
 
 	printf("  subject: ");
 	asn1_find_tag(fp, ASN1_TAG_SEQUENCE);
@@ -139,6 +140,8 @@ int main(int argc, char *argv[])
 	asn1_find_tag(fp, ASN1_TAG_CONTEXT_SPECIFIC_0);
 	length = asn1_get_length(fp);
 	print_attributes(fp, length);
+
+	print_signature(fp);
 
 out: /* Clean up */
 
@@ -558,6 +561,30 @@ void print_attributes(FILE *fp, int length)
 		length -= offset2 - offset1;
 	}
 
+	printf("\n");
+}
+
+void print_signature(FILE *fp)
+{
+	asn1_find_tag(fp, ASN1_TAG_SEQUENCE);
+	asn1_get_length(fp);
+
+	printf("  algorithmIdentifier: ");
+	asn1_find_tag(fp, ASN1_TAG_OBJECT_IDENTIFIER);
+	int length = asn1_get_length(fp);
+	print_oid_desc(get_oid(fp, length));
+
+	printf("\n");
+
+	printf("  signature:\n");
+	asn1_find_tag(fp, ASN1_TAG_BIT_STRING);
+	length = asn1_get_length(fp);
+	for (int i = 0; i < length; i++) {
+		printf("%02x ", getc(fp));
+		if ((i + 1) % 16 == 0) {
+			printf("\n");
+		}
+	}
 	printf("\n");
 }
 
