@@ -24,6 +24,8 @@ enum OID_TYPE {
 	OID_TYPE_RSA_ENCRYPTION,
 	OID_TYPE_SHA1_WITH_RSA_ENCRYPTION,
 	OID_TYPE_EMAIL_ADDRESS,
+	OID_TYPE_UNSTRUCTURED_NAME,
+	OID_TYPE_CHALLENGE_PASSWORD,
 	OID_TYPE_APPLE_SECURITY_86,
 	OID_TYPE_JURISDICTION_OF_INCORPORATION_LOCALITY_NAME,
 	OID_TYPE_JURISDICTION_OF_INCORPORATION_STATE_OR_PROVINCE_NAME,
@@ -369,7 +371,28 @@ OID oid_database[] = {
 	{ 4, { 1, 2, 840, 113549 }, "rsadsi" }, /* X.509 */
 	{ 7, { 1, 2, 840, 113549, 1, 1, 1 }, "rsaEncryption" }, /* RFC 4055 */
 	{ 7, { 1, 2, 840, 113549, 1, 1, 5 }, "sha1WithRSAEncryption" },
-	{ 7, { 1, 2, 840, 113549, 1, 9, 1 }, "emailAddress" }, /* RFC 5280 */
+
+	/* PKCS #9 */
+	{ 7, { 1, 2, 840, 113549, 1, 9, 1 }, "pkcs-9-ub-emailAddress" },
+	{ 7, { 1, 2, 840, 113549, 1, 9, 2 }, "pkcs-9-ub-unstructuredName" },
+	{ 7, { 1, 2, 840, 113549, 1, 9, 7 }, "pkcs-9-at-challengePassword" },
+
+	{ 11,
+	  { 1, 3, 6, 1, 4, 1, 311, 60, 2, 1, 1 },
+	  "jurisdictionOfIncorporationLocalityName" },
+	{ 11,
+	  { 1, 3, 6, 1, 4, 1, 311, 60, 2, 1, 2 },
+	  "jurisdictionOfIncorporationStateOrProvinceName" },
+	{ 11,
+	  { 1, 3, 6, 1, 4, 1, 311, 60, 2, 1, 3 },
+	  "jurisdictionOfIncorporationCountryName" },
+
+	{ 7,
+	  { 1, 2, 840, 113549, 1, 1, 11 },
+	  "sha256WithRSAEncryption" }, /* RFC 4055 */
+	{ 10,
+	  { 1, 3, 6, 1, 4, 1, 11129, 2, 4, 2 },
+	  "embedded-scts" }, /* RFC 6962 */
 
 	/* Apple Security */
 	{ 7, { 1, 2, 840, 113635, 100, 6, 86 }, "appleSecurity(6)?(86)" },
