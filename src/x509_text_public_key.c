@@ -13,6 +13,8 @@
 
 #pragma pack(push, 1)
 
+#define ASN1_TAG_MASK 0xdf /* Take out P/C flag */
+
 enum ASN1_TAG {
 	ASN1_TAG_EOC = 0x00,
 	ASN1_TAG_BOOLEAN = 0x01,
@@ -89,9 +91,9 @@ int main(int argc, char *argv[])
 		goto out;
 	}
 
-	/* Quick check */
-	if (asn1_find_tag(fp, ASN1_TAG_CONTEXT_SPECIFIC_0) < 0) {
-		fprintf(stderr, "Error: Unable to find version component\n");
+	/* version check */
+	if ((getc(fp) & ASN1_TAG_MASK) != ASN1_TAG_SEQUENCE) {
+		fprintf(stderr, "Error: Not a valid X.509 certificate\n");
 		ret = EXIT_FAILURE;
 		goto out;
 	}
@@ -99,7 +101,14 @@ int main(int argc, char *argv[])
 	rewind(fp);
 	printf("X509 Public Key certificate\n\n");
 
+	/* Top level */
+	asn1_find_tag(fp, ASN1_TAG_SEQUENCE);
+	asn1_get_length(fp);
+
 	printf("toBeSigned:\n");
+
+	asn1_find_tag(fp, ASN1_TAG_SEQUENCE);
+	asn1_get_length(fp);
 
 	int version = get_version(fp);
 	printf("  Version: v%1d\n", version + 1); /* 0=v1 */
@@ -134,6 +143,11 @@ int main(int argc, char *argv[])
 
 	printf("  subjectPublicKeyInfo:\n");
 	print_public_key_info(fp);
+
+	if (version == 0) {
+		ret = EXIT_SUCCESS;
+		goto out;
+	}
 
 	/* issuerUniqueIdentifier and subjectUniqueIdentifier are not
 	   implemented */
@@ -179,7 +193,6 @@ int asn1_get_length(FILE *fp)
 	return length;
 }
 
-#define ASN1_TAG_MASK 0xdf /* Take out P/C flag */
 int asn1_find_tag(FILE *fp, uint8_t tag)
 {
 	int c;
@@ -418,11 +431,16 @@ void print_printable_string(FILE *fp, int length)
 
 int get_version(FILE *fp)
 {
-	asn1_find_tag(fp, ASN1_TAG_CONTEXT_SPECIFIC_0);
-	asn1_get_length(fp);
-	asn1_find_tag(fp, ASN1_TAG_INTEGER);
-	asn1_get_length(fp);
-	return getc(fp);
+	int c = getc(fp) & ASN1_TAG_MASK;
+	if (c == ASN1_TAG_CONTEXT_SPECIFIC_0) {
+		asn1_get_length(fp);
+		asn1_find_tag(fp, ASN1_TAG_INTEGER);
+		asn1_get_length(fp);
+		return getc(fp);
+	} else {
+		fseek(fp, -1, SEEK_CUR);
+		return 0;
+	}
 }
 
 int get_serial_number(FILE *fp, char serial_number[], size_t length)
