@@ -144,11 +144,6 @@ int main(int argc, char *argv[])
 	printf("  subjectPublicKeyInfo:\n");
 	print_public_key_info(fp);
 
-	if (version == 0) {
-		ret = EXIT_SUCCESS;
-		goto out;
-	}
-
 	/* issuerUniqueIdentifier and subjectUniqueIdentifier are not
 	   implemented */
 	if (getc(fp) == ASN1_TAG_CONTEXT_SPECIFIC_1)
