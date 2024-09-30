@@ -41,6 +41,7 @@ void x509_init(X509 *x509)
 }
 
 int process_x509_buf(X509 *x509);
+uint8_t get_version(ASN1 *version);
 size_t get_signature_value(X509 *x509, uint8_t sig[], size_t len);
 
 #define ASN1_TAG_MASK 0xdf /* Take out P/C flag */
@@ -182,7 +183,13 @@ int process_x509_buf(X509 *x509)
 	asn1_get_length(p, &length_bytes);
 	p += length_bytes;
 
-	p = load_version(&x509->tbs.version, p);
+	/* Default case : no Context-specific 0 */
+	int is_v1 = (*p & 0xa0) ? 0 : 1;
+	uint8_t version = 1; /* Default v1 */
+	if (!is_v1) {
+		p = load_version(&x509->tbs.version, p);
+		version = get_version(&x509->tbs.version) + 1;
+	}
 
 	p = load_serial_number(&x509->tbs.serial_number, p);
 
@@ -196,7 +203,8 @@ int process_x509_buf(X509 *x509)
 
 	p = load_subject_public_key_info(&x509->tbs.subject_public_key_info, p);
 
-	p = load_extensions(&x509->tbs.extensions, p);
+	if (version != 1)
+		p = load_extensions(&x509->tbs.extensions, p);
 
 	p = load_signature_algorithm(&x509->sig.algorithm, p);
 
