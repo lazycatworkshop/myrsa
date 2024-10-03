@@ -7,7 +7,7 @@
 #include <getopt.h>
 #include "mySHA.h"
 
-#define MAX_FILE_SIZE (1024 << 2) /* 4K */
+#define MAX_FILE_SIZE (1024 << 7) /* 128 KB */
 
 int is_big_endian(void)
 {
