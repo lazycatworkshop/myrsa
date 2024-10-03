@@ -1,5 +1,5 @@
 # How Does RSA work?
-## I. Introduction
+## Introduction
 In the physical world, no one had ever conceived of a lock requiring two keys until Diffie and Hellman introduced the idea of public key cryptography. However, they didn’t propose a practical implementation. It was Rivest, Shamir, and Adleman who, for the first time, devised a functional system to implement this concept, revolutionizing cryptography with what we now call RSA.
 
 The RSA magic works as follows:
@@ -17,7 +17,7 @@ $d$ is the private exponent,
 
 $n$ is the modulus.
 
-## II Modular Arithmetic and Congruence
+## Modular Arithmetic and Congruence
 
 The symbol $\equiv$ represents congruence in mathematics, meaning two numbers have the same remainder when divided by a given modulus. For example,
 
@@ -25,7 +25,7 @@ $17 \equiv 5 \mod 12$
 
 Here, 17 and 5 have the same remainder, 5 when divided by 12.
 
-## III. The RSA process
+## The RSA process
 Applying each of the RSA keys (encryption and decryption) returns the origin message:
 
 $$
@@ -61,7 +61,7 @@ $$
 M^{e \cdot d} = M^{1 + \phi(n) \cdot k} = M \cdot (M^{\phi(n))^{k}}) \tag{4}
 $$
 
-## IV. Euler's Theorem
+## Euler's Theorem
 Euler's totient function is critical to RSA security. Another key pillar is Euler's Theorem, which states:
 $$
 M^{\phi(n)} \equiv 1 \mod n \tag{5}
@@ -104,10 +104,10 @@ This makes factoring  $n$ difficult and, in turn, guessing $\phi(n)$ becomes puz
 
 Once $n$ is chosen, finding $d$, the private exponent, is straightforward using equation $(2)$.
 
-## VI Ensuring Secure Messages
+## Ensuring Secure Messages
 In addition to the choice of $n$, we also want the messages less then the modulus such that we assure the Euler's Theorem.
 
-## VII. EXamples
+## EXamples
 Below are some examples demonstrating the RSA process in action: 
 
 ```console

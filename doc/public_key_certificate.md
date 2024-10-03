@@ -1,6 +1,6 @@
 # What is a public key certificate
 
-# I. Public key certificate
+# Public key certificate
 
 We can generate a public key using openssl and send it along with signed documents.
 
@@ -181,7 +181,7 @@ altSignature BIT STRING OPTIONAL]]
 WITH COMPONENTS {..., altAlgorithmIdentifier ABSENT, altSignature ABSENT } ) }
 ```
 
-## II. Signed certificate
+## Signed certificate
 Verifying the signature is in the check list against a certificate. The public key portion, toBeSigned, is signed and the signature goes to the end of the certificate.
 
 ```console
@@ -343,7 +343,7 @@ $ hexdump -C www.apple.com.dgst
 00000020
 ```
 
-# III. Verify the public key certificate
+# Verify the public key certificate
 
 We can get the link to the CA's public key for this certificate from Authority Information Access extension:
 
@@ -545,7 +545,7 @@ H = Hash(M).
 6. Output EM.
 ```
 
-## IV. Find a certificate from a public source
+## Find a certificate from a public source
 
 The Authority Information Access extension of the CA's public key does not show the link for the public key for its own authentication, so we need to find it from a public source. First, get the issuer information:
 
@@ -659,7 +659,7 @@ $ hexdump -C apevsrsa2g1.dgst
 $
 ```
 
-## V. Self-signed certificate
+## Self-signed certificate
 
 The last CA certificate is a self-signed certificate:
 
@@ -701,7 +701,7 @@ $ hexdump -C DigiCertHighAssuranceEVRootCA.dgst
 $ 
 ```
 
-## VI. Chain of trust
+## Chain of trust
 
 The chain of trust ensures that the entity presenting the certificate (e.g., a website) is genuine and verified by a trusted Certificate Authority. In our example here:
 
