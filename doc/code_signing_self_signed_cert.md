@@ -1,5 +1,10 @@
 # Code-signing with a self-signed certificate
-To achieve maximum security, it is generally preferred to obtain a certificate from a Certificate Authority (CA). However, in certain limited access environments, it can be as simple as using a self-signed certificate. This approach is often used to verify that code comes from the same publisher throughout the development and testing stages or for internal deployments. In this tutorial, we will use a self-signed certificate for educational purposes to demonstrate the process.
+
+Malicious software, commonly referred to as malware, dates back to the 1970s, with the term "virus" becoming even more widespread. In response, people have relied on antivirus software to detect and eliminate such threats, only to discover that these programs themselves are sometimes Trojan horses. If we could assign a unique ID to each piece of software, similar to how passports are used at immigration checkpoints, it could provide greater peace of mind.
+
+Today, electronic documents are often protected by digital signatures, ensuring their authenticity and integrity. We can apply the same concept to software to enhance its identification and verification.
+
+To achieve maximum security, it is generally preferred to obtain a certificate from a Certificate Authority (CA), trusted organizations or entities responsible for issuing digital certificates. However, in certain limited access environments, it can be as simple as using a self-signed certificate. This approach is often used to verify that code comes from the same publisher throughout the development and testing stages or for internal deployments. In this tutorial, we will use a self-signed certificate for educational purposes to demonstrate the process.
 
 ## Generate a self-signed certificate
 ### Generate a private key
