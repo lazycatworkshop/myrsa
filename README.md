@@ -56,6 +56,16 @@ Created directories by the build process:
 - **`/bin`**: The executables except for unit tests.
 - **`/test`**: The executables for unit tests.
 
+## Documents
+
+The `doc` directory contains the following documentation files in Markdown:
+
+- **`pub_key_cryptography.md`**: A simple explanation about the two-key scheme.
+- **`rsa_lab_signing.md`**: A hands-on exercise with the OpenSSL utility.
+- **`how_rsa_works.md`**: A deeper exploration of the RSA algorithm.
+- **`public_key_certificate.md`**: A look into X.509 certificates.
+- **`code_signing_self_signed_cert.md`**: A demonstration of code signing using a self-signed certificate stored in a YubiKey token.
+
 ## Development environment
 - Raspberry Pi 4B, 4GB memory
 - OS:
