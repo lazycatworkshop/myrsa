@@ -198,8 +198,8 @@ int main(int argc, char *argv[])
 		print_indent();
 		printf("%s  ", asn1_print_tag(tag));
 		printf("L = %4d\n", length);
-		if (!length)
-			goto next_primitive;
+		if (!length)	/* Indefinite form */
+			continue;
 
 		if (tag & ASN1_TAG_CONSTRUCTIVE)
 			goto next_constructive;
