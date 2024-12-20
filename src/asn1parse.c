@@ -23,15 +23,24 @@ enum OID_TYPE {
 	OID_TYPE_RSA,
 	OID_TYPE_RSA_ENCRYPTION,
 	OID_TYPE_SHA1_WITH_RSA_ENCRYPTION,
+
+	//* PKCS #9 */
 	OID_TYPE_EMAIL_ADDRESS,
 	OID_TYPE_UNSTRUCTURED_NAME,
 	OID_TYPE_CHALLENGE_PASSWORD,
+
+	/* Apple Security */
 	OID_TYPE_APPLE_SECURITY_86,
+
+	/* 311 Microsoft */
 	OID_TYPE_JURISDICTION_OF_INCORPORATION_LOCALITY_NAME,
 	OID_TYPE_JURISDICTION_OF_INCORPORATION_STATE_OR_PROVINCE_NAME,
 	OID_TYPE_JURISDICTION_OF_INCORPORATION_COUNTRY_NAME,
+
 	OID_TYPE_SHA256_WITH_RSA_ENCRYPTION,
 	OID_TYPE_EMBEDDED_SCTS,
+
+	/* RFC 5280 (X.509 2008)*/
 	OID_TYPE_AUTHORITY_INFO_ACCESS,
 	OID_TYPE_CPS,
 	OID_TYPE_UNOTICE,
@@ -39,6 +48,8 @@ enum OID_TYPE {
 	OID_TYPE_CLIENT_AUTH,
 	OID_TYPE_OCSP,
 	OID_TYPE_CA_ISSUERS,
+
+	/* X.520 */
 	OID_TYPE_COMMON_NAME,
 	OID_TYPE_SERIAL_NUMBER,
 	OID_TYPE_COUNTRY_NAME,
@@ -47,6 +58,8 @@ enum OID_TYPE {
 	OID_TYPE_ORGANIZATION_NAME,
 	OID_TYPE_ORGANIZATIONAL_UNIT_NAME,
 	OID_TYPE_BUSINESS_CATEGORY,
+
+	/* X.509 RFC5280 */
 	OID_TYPE_SUBJECT_KEY_IDENTIFIER,
 	OID_TYPE_KEY_USAGE,
 	OID_TYPE_SUBJECT_ALT_NAME,
@@ -56,11 +69,14 @@ enum OID_TYPE {
 	OID_TYPE_ANY_POLICY,
 	OID_TYPE_AUTHORITY_KEY_IDENTIFIER,
 	OID_TYPE_EXT_KEY_USAGE,
+
+	/* Digicert (11412) */
 	OID_TYPE_EV_SSL_CERTIFICATES,
+
 	OID_TYPE_EV_GUIDELINES,
 	OID_TYPE_DOMAIN_VALID,
-	/* Add more OIDs as needed */
 
+	/* Add more OIDs as needed */
 	OID_TYPE_UNKNOWN
 };
 
@@ -159,6 +175,7 @@ int main(int argc, char *argv[])
 		ASN1_TAG_UTC = 0x17,
 		ASN1_TAG_GENERALIZED_TIME = 0x18,
 		ASN1_TAG_CONTEXT_SPECIFIC_0 = 0x80,
+		ASN1_TAG_CONTEXT_SPECIFIC_1 = 0x81,
 		ASN1_TAG_CONTEXT_SPECIFIC_2 = 0x82,
 		ASN1_TAG_CONTEXT_SPECIFIC_3 = 0x83,
 		ASN1_TAG_CONTEXT_SPECIFIC_4 = 0x84,
@@ -166,7 +183,6 @@ int main(int argc, char *argv[])
 		/* Add more tags here */
 		ASN1_TAG_UNKNOWN = 0xff
 	};
-
 	/* Parse the ASN.1 content */
 	while ((c = getc(fp)) != EOF) {
 		uint8_t length_bytes = 0;
@@ -198,7 +214,7 @@ int main(int argc, char *argv[])
 		print_indent();
 		printf("%s  ", asn1_print_tag(tag));
 		printf("L = %4d\n", length);
-		if (!length)	/* Indefinite form */
+		if (!length) /* Indefinite form */
 			continue;
 
 		if (tag & ASN1_TAG_CONSTRUCTIVE)
@@ -337,6 +353,9 @@ const char *asn1_print_tag(uint8_t tag)
 	case 0x80:
 		ret = "CONTEXT SPECIFIC 0";
 		break;
+	case 0x81:
+		ret = "CONTEXT SPECIFIC 1";
+		break;
 	case 0x82:
 		ret = "CONTEXT SPECIFIC 2";
 		break;
@@ -376,23 +395,6 @@ OID oid_database[] = {
 	{ 7, { 1, 2, 840, 113549, 1, 9, 1 }, "pkcs-9-ub-emailAddress" },
 	{ 7, { 1, 2, 840, 113549, 1, 9, 2 }, "pkcs-9-ub-unstructuredName" },
 	{ 7, { 1, 2, 840, 113549, 1, 9, 7 }, "pkcs-9-at-challengePassword" },
-
-	{ 11,
-	  { 1, 3, 6, 1, 4, 1, 311, 60, 2, 1, 1 },
-	  "jurisdictionOfIncorporationLocalityName" },
-	{ 11,
-	  { 1, 3, 6, 1, 4, 1, 311, 60, 2, 1, 2 },
-	  "jurisdictionOfIncorporationStateOrProvinceName" },
-	{ 11,
-	  { 1, 3, 6, 1, 4, 1, 311, 60, 2, 1, 3 },
-	  "jurisdictionOfIncorporationCountryName" },
-
-	{ 7,
-	  { 1, 2, 840, 113549, 1, 1, 11 },
-	  "sha256WithRSAEncryption" }, /* RFC 4055 */
-	{ 10,
-	  { 1, 3, 6, 1, 4, 1, 11129, 2, 4, 2 },
-	  "embedded-scts" }, /* RFC 6962 */
 
 	/* Apple Security */
 	{ 7, { 1, 2, 840, 113635, 100, 6, 86 }, "appleSecurity(6)?(86)" },
