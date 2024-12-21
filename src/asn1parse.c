@@ -24,7 +24,15 @@ enum OID_TYPE {
 	OID_TYPE_RSA_ENCRYPTION,
 	OID_TYPE_SHA1_WITH_RSA_ENCRYPTION,
 
-	//* PKCS #9 */
+	/* RFC 5652 CMS/PkCS #7 */
+	OID_TYPE_ID_DATA,
+	OID_TYPE_ID_SIGNED_DATA,
+	OID_TYPE_ID_CONTENT_TYPE,
+	OID_TYPE_ID_MESSAGE_DIGEST,
+	OID_TYPE_ID_SIGNING_TIME,
+	OID_TYPE_ID_COUNTER_SIGNATURE,
+
+	/* PKCS #9 */
 	OID_TYPE_EMAIL_ADDRESS,
 	OID_TYPE_UNSTRUCTURED_NAME,
 	OID_TYPE_CHALLENGE_PASSWORD,
@@ -70,6 +78,9 @@ enum OID_TYPE {
 	OID_TYPE_AUTHORITY_KEY_IDENTIFIER,
 	OID_TYPE_EXT_KEY_USAGE,
 
+	/* RFC 8017 PKCS #1*/
+	OID_TYPE_SHA256,
+
 	/* Digicert (11412) */
 	OID_TYPE_EV_SSL_CERTIFICATES,
 
@@ -88,6 +99,7 @@ void print_oid(uint32_t oid_value[], uint32_t oid_len);
 void print_oid_desc(int oid_type);
 void print_indent(void);
 void level_inc(uint32_t len);
+void level_dec(void);
 void level_len_inc(uint32_t len);
 void level_len_dec(uint32_t len);
 
@@ -187,13 +199,15 @@ int main(int argc, char *argv[])
 	while ((c = getc(fp)) != EOF) {
 		uint8_t length_bytes = 0;
 		int length = 0;
-		level_inc(1);
+
 		printf("%04ld: ", ftell(fp) - 1);
 
 		/*  Identifier octets */
 		uint8_t tag = c;
+
 		if (verbose_level > VERBOSE_LEVEL_INFO)
 			printf("Tag: %02x ", tag);
+
 		if (!asn1_print_tag(tag)) {
 			fprintf(stderr, "Error: Unknown tag 0x%02x\n", tag);
 			ret = EXIT_FAILURE;
@@ -209,13 +223,32 @@ int main(int argc, char *argv[])
 				length = (length << 8) | getc(fp);
 			}
 		}
-		level_len_inc(length_bytes + 1);
-		level_len_inc(length);
+
+		/* Match EOC tag to the indefinite content. */
+		if (tag != ASN1_TAG_EOC) {
+			level_inc(1);
+			level_len_inc(length_bytes + 1);
+			level_len_inc(length);
+		}
+
 		print_indent();
 		printf("%s  ", asn1_print_tag(tag));
 		printf("L = %4d\n", length);
-		if (!length) /* Indefinite form */
+
+		if (tag == ASN1_TAG_EOC) {
+			level_dec(); /* Complete the indefinite content */
 			continue;
+		}
+
+		if (tag == ASN1_TAG_NULL) {
+			goto next_primitive;
+		}
+
+		if (!length) /* Indefinite form */
+		{
+			level_len_inc(0xffff); /* Indefinite length */
+			continue;
+		}
 
 		if (tag & ASN1_TAG_CONSTRUCTIVE)
 			goto next_constructive;
@@ -281,9 +314,9 @@ int main(int argc, char *argv[])
 		if ((verbose_level >= VERBOSE_LEVEL_INFO) && (length % 16))
 			printf("\n");
 
-next_primitive:
+next_primitive: /* No more */
 		level_len_dec(length); /* Content octets */
-next_constructive:
+next_constructive: /* More to come */
 		level_len_dec(length_bytes + 1); /* Length octets */
 		level_len_dec(1); /* Identifier octets */
 	}
@@ -391,6 +424,14 @@ OID oid_database[] = {
 	{ 7, { 1, 2, 840, 113549, 1, 1, 1 }, "rsaEncryption" }, /* RFC 4055 */
 	{ 7, { 1, 2, 840, 113549, 1, 1, 5 }, "sha1WithRSAEncryption" },
 
+	/* RFC 5652 CMS/PKCS #7 */
+	{ 7, { 1, 2, 840, 113549, 1, 7, 1 }, "id_data" },
+	{ 7, { 1, 2, 840, 113549, 1, 7, 2 }, "id_signeData" },
+	{ 7, { 1, 2, 840, 113549, 1, 9, 3 }, "id_contentType" },
+	{ 7, { 1, 2, 840, 113549, 1, 9, 4 }, "id_messageDigest" },
+	{ 7, { 1, 2, 840, 113549, 1, 9, 5 }, "id_signingTime" },
+	{ 7, { 1, 2, 840, 113549, 1, 9, 6 }, "id_counterSignature" },
+
 	/* PKCS #9 */
 	{ 7, { 1, 2, 840, 113549, 1, 9, 1 }, "pkcs-9-ub-emailAddress" },
 	{ 7, { 1, 2, 840, 113549, 1, 9, 2 }, "pkcs-9-ub-unstructuredName" },
@@ -446,6 +487,9 @@ OID oid_database[] = {
 	{ 5, { 2, 5, 29, 32, 0 }, "id-ce-anyPolicy" },
 	{ 4, { 2, 5, 29, 35 }, "id-ce-authorityKeyIdentifier" },
 	{ 4, { 2, 5, 29, 37 }, "id-ce-extKeyUsage" },
+
+	/* RFC 8017 PKCS #1*/
+	{ 9, { 2, 16, 840, 1, 101, 3, 4, 2, 1 }, "id_sha256" },
 
 	/* Digicert (11412) */
 	{ 7, { 2, 16, 840, 1, 114412, 2, 1 }, "ev-ssl-certificates(2) 1" },
@@ -543,6 +587,7 @@ void level_inc(uint32_t len)
 void level_dec()
 {
 	indent_str[indent_level] = 0;
+	level_len[indent_level] = 0;
 	indent_level--;
 }
 
