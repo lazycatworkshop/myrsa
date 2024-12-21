@@ -423,6 +423,9 @@ OID oid_database[] = {
 	{ 4, { 1, 2, 840, 113549 }, "rsadsi" }, /* X.509 */
 	{ 7, { 1, 2, 840, 113549, 1, 1, 1 }, "rsaEncryption" }, /* RFC 4055 */
 	{ 7, { 1, 2, 840, 113549, 1, 1, 5 }, "sha1WithRSAEncryption" },
+	{ 9,
+	  { 1, 2, 840, 113549, 1, 9, 16, 2, 4 },
+	  "id-aa-contentHint" }, /* RFC */
 
 	/* RFC 5652 CMS/PKCS #7 */
 	{ 7, { 1, 2, 840, 113549, 1, 7, 1 }, "id_data" },
