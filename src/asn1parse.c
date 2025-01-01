@@ -14,6 +14,8 @@ enum {
 } verbose_level = VERBOSE_LEVEL_NONE;
 
 #define ASN1_TAG_CONSTRUCTIVE 0x20
+#define ASN1_INDEFINITE_FORM 0x80
+#define ASN1_INDEFINITE_LENGTH 0xffff
 
 enum OID_TYPE {
 	OID_TYPE_ISO = 0,
@@ -217,18 +219,24 @@ int main(int argc, char *argv[])
 
 		/* Length octets */
 		length = getc(fp);
-		if (length & 0x80) {
-			length_bytes = length & 0x7f;
-			length = 0;
-			for (int i = 0; i < length_bytes; i++) {
-				length = (length << 8) | getc(fp);
+		if (length != ASN1_INDEFINITE_FORM) {
+			if (length & 0x80) {
+				length_bytes = length & 0x7f;
+				length = 0;
+				for (int i = 0; i < length_bytes; i++) {
+					length = (length << 8) | getc(fp);
+				}
 			}
+		} else {
+			length = ASN1_INDEFINITE_LENGTH;
 		}
 
 		/* Match EOC tag to the indefinite content. */
 		if (tag != ASN1_TAG_EOC) {
 			level_inc(1);
-			level_len_inc(length_bytes + 1);
+			if (length != ASN1_INDEFINITE_LENGTH) {
+				level_len_inc(length_bytes + 1);
+			}
 			level_len_inc(length);
 		}
 
@@ -236,25 +244,23 @@ int main(int argc, char *argv[])
 		printf("%s  ", asn1_print_tag(tag));
 		printf("L = %4d\n", length);
 
-		if (tag == ASN1_TAG_EOC) {
-			level_dec(); /* Complete the indefinite content */
+		/* Content octets */
+		/* START: Cases with no concret length */
+		if (length == ASN1_INDEFINITE_LENGTH)
 			continue;
-		}
 
 		if (tag == ASN1_TAG_NULL) {
 			goto next_primitive;
 		}
 
-		if (!length) /* Indefinite form */
-		{
-			level_len_inc(0xffff); /* Indefinite length */
+		if (tag == ASN1_TAG_EOC) {
+			level_dec(); /* Complete the indefinite content */
 			continue;
 		}
 
 		if (tag & ASN1_TAG_CONSTRUCTIVE)
 			goto next_constructive;
-
-		/* Content octets */
+		/* End: Cases for no concret length */
 
 		if (tag == ASN1_TAG_OBJECT_IDENTIFIER) {
 			uint8_t asn1_oid_value[128];
