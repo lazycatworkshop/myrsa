@@ -71,6 +71,7 @@ enum OID_TYPE {
 	OID_TYPE_BUSINESS_CATEGORY,
 
 	/* X.509 RFC5280 */
+	OID_TYPE_SUBJECT_DIRECTORY_ATTRIBUTES,
 	OID_TYPE_SUBJECT_KEY_IDENTIFIER,
 	OID_TYPE_KEY_USAGE,
 	OID_TYPE_SUBJECT_ALT_NAME,
@@ -488,6 +489,7 @@ OID oid_database[] = {
 	{ 4, { 2, 5, 4, 15 }, "id-at-businessCategory" },
 
 	/* X.509 RFC5280 */
+	{ 4, { 2, 5, 29, 9 }, "id-ce-subjectDirectoryAttributes" },
 	{ 4, { 2, 5, 29, 14 }, "id-ce-subjectKeyIdentifier" },
 	{ 4, { 2, 5, 29, 15 }, "id-ce-keyUsage" },
 	{ 4, { 2, 5, 29, 17 }, "id-ce-subjectAltName" },
