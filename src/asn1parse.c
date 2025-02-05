@@ -219,24 +219,24 @@ int main(int argc, char *argv[])
 		}
 
 		/* Length octets */
-		length = getc(fp);
-		if (length != ASN1_INDEFINITE_FORM) {
-			if (length & 0x80) {
-				length_bytes = length & 0x7f;
-				length = 0;
-				for (int i = 0; i < length_bytes; i++) {
-					length = (length << 8) | getc(fp);
-				}
+		c = getc(fp);
+		length = c;
+
+		if (length & 0x80) {
+			length_bytes = length & 0x7f;
+			length = 0;
+			for (int i = 0; i < length_bytes; i++) {
+				length = (length << 8) | getc(fp);
 			}
-		} else {
-			length = ASN1_INDEFINITE_LENGTH;
 		}
 
 		/* Match EOC tag to the indefinite content. */
 		if (tag != ASN1_TAG_EOC) {
 			level_inc(1);
-			if (length != ASN1_INDEFINITE_LENGTH) {
+			if (c != ASN1_INDEFINITE_FORM) {
 				level_len_inc(length_bytes + 1);
+			} else {
+				level_len_inc(ASN1_INDEFINITE_LENGTH);
 			}
 			level_len_inc(length);
 		}
