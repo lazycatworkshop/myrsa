@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <getopt.h>
+#include <errno.h>
 
 enum {
 	VERBOSE_LEVEL_NONE,
@@ -137,7 +138,8 @@ int main(int argc, char *argv[])
 
 	fp = fopen(filename, "r");
 	if (fp == NULL) {
-		fprintf(stderr, "Error: Cannot open file %s\n", filename);
+		fprintf(stderr, "Error: Cannot open file %s: %s\n", filename,
+			strerror(errno));
 		ret = EXIT_FAILURE;
 		goto out;
 	}
