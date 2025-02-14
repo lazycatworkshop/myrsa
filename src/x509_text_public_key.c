@@ -404,6 +404,23 @@ int get_oid(FILE *fp, int length)
 	return oid_type;
 }
 
+/** asn1_get_object_identifier - Get the object identifier
+ * @fp: File pointer
+ *
+ * This function decodes ASN.1 encoding for OBJECT IDENTIFIER type from the
+ * file.
+ *
+ * Return: The index to the OID database.
+ */
+int asn1_get_object_identifier(FILE *fp)
+{
+	asn1_find_tag(fp, ASN1_TAG_OBJECT_IDENTIFIER);
+	int length = asn1_get_length(fp);
+	int oid_type = get_oid(fp, length);
+
+	return oid_type;
+}
+
 int print_octet_string(FILE *fp, int length)
 {
 	for (int i = 0; i < length; i++) {
@@ -546,14 +563,19 @@ int x509_process_certificate_serial_number(FILE *fp)
 	return length;
 }
 
+/**
+ * process_object_identifier - Process an object identifier
+ * @fp: File pointer
+ * 
+ * Return: The index to the OID database.
+ */
 int process_object_identifier(FILE *fp)
 {
-	asn1_find_tag(fp, ASN1_TAG_OBJECT_IDENTIFIER);
-	int length = asn1_get_length(fp);
-	int oid_type = get_oid(fp, length);
+	int oid_type = asn1_get_object_identifier(fp);
 	print_oid_desc(oid_type);
+	printf("\n");
 
-	return 1;
+	return oid_type;
 }
 
 int x509_process_algorithm_idenfifier(FILE *fp)
@@ -661,16 +683,14 @@ int process_attributde_type_and_value(FILE *fp)
 	asn1_get_length(fp);
 
 	/* type */
-	asn1_find_tag(fp, ASN1_TAG_OBJECT_IDENTIFIER);
-	int length = asn1_get_length(fp);
-	int oid_type = get_oid(fp, length);
+	int oid_type = asn1_get_object_identifier(fp);
 	print_oid_label(oid_type);
 
 	printf("=");
 
 	/* value ANY */
 	int c = getc(fp);
-	length = asn1_get_length(fp);
+	int length = asn1_get_length(fp);
 
 	/* Support only printable string now. */
 	switch (c & ASN1_TAG_MASK) {
@@ -1499,9 +1519,7 @@ int x509_process_extension(FILE *fp)
 	asn1_find_tag(fp, ASN1_TAG_SEQUENCE);
 	asn1_get_length(fp);
 
-	asn1_find_tag(fp, ASN1_TAG_OBJECT_IDENTIFIER);
-	int length = asn1_get_length(fp);
-	int oid_type = get_oid(fp, length);
+	int oid_type = asn1_get_object_identifier(fp);
 	printf("    ");
 	print_oid_desc(oid_type);
 
@@ -1521,7 +1539,7 @@ int x509_process_extension(FILE *fp)
 
 	/* extnValue */
 	asn1_find_tag(fp, ASN1_TAG_OCTET_STRING);
-	length = asn1_get_length(fp);
+	int length = asn1_get_length(fp);
 	switch (oid_type) {
 	case OID_TYPE_AUTHORITY_KEY_IDENTIFIER:
 		x509_process_authority_key_identifier(fp);
