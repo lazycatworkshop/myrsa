@@ -412,7 +412,7 @@ int get_oid(FILE *fp, int length)
  *
  * Return: The index to the OID database.
  */
-int asn1_get_object_identifier(FILE *fp)
+int asn1_process_object_identifier(FILE *fp)
 {
 	asn1_find_tag(fp, ASN1_TAG_OBJECT_IDENTIFIER);
 	int length = asn1_get_length(fp);
@@ -571,7 +571,7 @@ int x509_process_certificate_serial_number(FILE *fp)
  */
 int process_object_identifier(FILE *fp)
 {
-	int oid_type = asn1_get_object_identifier(fp);
+	int oid_type = asn1_process_object_identifier(fp);
 	print_oid_desc(oid_type);
 	printf("\n");
 
@@ -683,7 +683,7 @@ int process_attributde_type_and_value(FILE *fp)
 	asn1_get_length(fp);
 
 	/* type */
-	int oid_type = asn1_get_object_identifier(fp);
+	int oid_type = asn1_process_object_identifier(fp);
 	print_oid_label(oid_type);
 
 	printf("=");
@@ -1519,7 +1519,7 @@ int x509_process_extension(FILE *fp)
 	asn1_find_tag(fp, ASN1_TAG_SEQUENCE);
 	asn1_get_length(fp);
 
-	int oid_type = asn1_get_object_identifier(fp);
+	int oid_type = asn1_process_object_identifier(fp);
 	printf("    ");
 	print_oid_desc(oid_type);
 
