@@ -446,7 +446,9 @@ void print_printable_string(FILE *fp, int length)
 
 void print_utf8_string(FILE *fp, int length)
 {
+	/* TODO: verify the necessity of setting locale.
 	setlocale(LC_ALL, "en_US.UTF-8");
+	 */
 	print_printable_string(fp, length);
 }
 
