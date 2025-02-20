@@ -583,19 +583,6 @@ int x509_process_certificate_serial_number(FILE *fp)
 	return length;
 }
 
-/**
- * process_object_identifier - Process an object identifier
- * @fp: File pointer
- * 
- * Return: The index to the OID database.
- */
-int process_object_identifier(FILE *fp)
-{
-	int oid_type = asn1_print_object_identifier(fp);
-
-	return oid_type;
-}
-
 int x509_process_algorithm_idenfifier(FILE *fp)
 {
 	/* AlgorithmIdentifier ::= SEQUENCE {
@@ -608,7 +595,7 @@ int x509_process_algorithm_idenfifier(FILE *fp)
 	int offset1, offset2 = 0;
 	offset1 = ftell(fp);
 
-	process_object_identifier(fp);
+	asn1_print_object_identifier(fp);
 	printf("\n");
 
 	offset2 = ftell(fp);
@@ -1022,7 +1009,7 @@ int x509_process_policy_qualifiers(FILE *fp)
 		asn1_get_length(fp);
 
 		/* policyQualifierId */
-		process_object_identifier(fp);
+		asn1_print_object_identifier(fp);
 
 		printf(": ");
 
@@ -1060,7 +1047,7 @@ int x509_process_policy_information(FILE *fp)
 	offset1 = ftell(fp);
 
 	/* policyIdentifier */
-	process_object_identifier(fp);
+	asn1_print_object_identifier(fp);
 
 	printf("\n");
 
@@ -1198,7 +1185,7 @@ int x509_process_authority_info_access(FILE *fp)
 		asn1_get_length(fp);
 
 		/* accessMethod */
-		process_object_identifier(fp);
+		asn1_print_object_identifier(fp);
 
 		printf(": ");
 
@@ -1222,7 +1209,7 @@ int x509_process_ext_key_usage(FILE *fp)
 	while (length) {
 		offset1 = ftell(fp);
 
-		process_object_identifier(fp);
+		asn1_print_object_identifier(fp);
 
 		offset2 = ftell(fp);
 		length -= offset2 - offset1;
