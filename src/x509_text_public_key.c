@@ -1309,6 +1309,68 @@ int x509_process_crl_distribution_points(FILE *fp)
 	return 1;
 }
 
+int x509_process_subject_directory_attribute(FILE *fp)
+{
+	/* Attribute ::= SEQUENCE {
+		 *    type OBJECT IDENTIFIER,
+		 *    value SET OF ANY
+		 * }
+	*/
+	asn1_find_tag(fp, ASN1_TAG_SEQUENCE);
+	asn1_get_length(fp);
+
+	/* type */
+	asn1_process_object_identifier(fp);
+
+	printf(": ");
+
+	/* value */
+	asn1_find_tag(fp, ASN1_TAG_SET);
+	asn1_get_length(fp);
+	int c = getc(fp);
+	switch (c & ASN1_TAG_MASK) {
+	case ASN1_TAG_PRINTABLE_STRING:
+		int l = asn1_get_length(fp);
+		print_printable_string(fp, l);
+		break;
+	case ASN1_TAG_OBJECT_IDENTIFIER:
+		ungetc(c, fp);
+		asn1_process_object_identifier(fp);
+		break;
+	default:
+		fprintf(stderr, "Error: Not a valid Attribute\n");
+		return 0;
+		break;
+	}
+
+	printf("\n");
+
+	return 1;
+}
+
+int x509_process_subject_directory_attributes(FILE *fp)
+{
+	/* subjectDirectoryAttributes EXTENSION ::= {
+	 *	SYNTAX AttributesSyntax
+	 *	IDENTIFIED BY id-ce-subjectDirectoryAttributes }
+	 *	AttributesSyntax ::= SEQUENCE SIZE (1..MAX) OF Attribute
+	 */
+	asn1_find_tag(fp, ASN1_TAG_SEQUENCE);
+	int length = asn1_get_length(fp);
+
+	int offset1, offset2 = 0;
+	while (length) {
+		offset1 = ftell(fp);
+
+		x509_process_subject_directory_attribute(fp);
+
+		offset2 = ftell(fp);
+		length -= offset2 - offset1;
+	}
+
+	return 1;
+}
+
 /* It hsa more entries than defined in RFC 5246.
  * I forgot where it come from. */
 enum hash_alg {
@@ -1603,6 +1665,9 @@ int x509_process_extension(FILE *fp)
 	case OID_TYPE_EMBEDDED_SCTS:
 		/* RFC 6962 v1 */
 		process_scts(fp);
+		break;
+	case OID_TYPE_SUBJECT_DIRECTORY_ATTRIBUTES:
+		x509_process_subject_directory_attributes(fp);
 		break;
 	default:
 		printf("    Unknown: ");
