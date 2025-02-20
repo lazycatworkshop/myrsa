@@ -383,8 +383,10 @@ void print_oid_desc(int oid_type)
 	printf("%s", oid_database[oid_type].description);
 }
 
-int get_oid(FILE *fp, int length)
+int asn1_get_oid_type(FILE *fp)
 {
+	asn1_find_tag(fp, ASN1_TAG_OBJECT_IDENTIFIER);
+	int length = asn1_get_length(fp);
 	uint8_t asn1_oid_value[128];
 	for (int i = 0; i < length; i++) {
 		asn1_oid_value[i] = getc(fp);
@@ -395,36 +397,37 @@ int get_oid(FILE *fp, int length)
 	decode_asn1_oid(asn1_oid_value, length, oid_value, &oid_len);
 	int oid_type = asn1_lookup_oid(oid_value, oid_len);
 
+#ifdef DEBUG
 	if (oid_type == OID_TYPE_UNKNOWN) {
 		printf("Unknown ");
 		print_oid(oid_value, oid_len);
 		printf("\n");
 	}
+#endif
 
 	return oid_type;
 }
 
-/** asn1_get_object_identifier - Get the object identifier
- * @fp: File pointer
- *
- * This function decodes ASN.1 encoding for OBJECT IDENTIFIER type from the
- * file.
- *
- * Return: The index to the OID database.
- */
-int asn1_process_object_identifier(FILE *fp)
+int asn1_get_oid(FILE *fp, int length, uint8_t oid_value[], uint32_t *oid_len)
+{
+	for (int i = 0; i < length; i++) {
+		oid_value[i] = getc(fp);
+	}
+	*oid_len = length;
+
+	return 1;
+}
+
+int asn1_print_object_identifier(FILE *fp)
 {
 	asn1_find_tag(fp, ASN1_TAG_OBJECT_IDENTIFIER);
 	int length = asn1_get_length(fp);
-
 	uint8_t asn1_oid_value[128];
-	for (int i = 0; i < length; i++) {
-		asn1_oid_value[i] = getc(fp);
-	}
 	uint32_t oid_len = 0;
-	uint32_t oid_value[128];
+	asn1_get_oid(fp, length, asn1_oid_value, &oid_len);
 
-	decode_asn1_oid(asn1_oid_value, length, oid_value, &oid_len);
+	uint32_t oid_value[128];
+	decode_asn1_oid(asn1_oid_value, oid_len, oid_value, &oid_len);
 	int oid_type = asn1_lookup_oid(oid_value, oid_len);
 
 	if (oid_type != OID_TYPE_UNKNOWN) {
@@ -432,15 +435,6 @@ int asn1_process_object_identifier(FILE *fp)
 	} else {
 		print_oid(oid_value, oid_len);
 	}
-
-	return oid_type;
-}
-
-int asn1_get_object_identifier(FILE *fp)
-{
-	asn1_find_tag(fp, ASN1_TAG_OBJECT_IDENTIFIER);
-	int length = asn1_get_length(fp);
-	int oid_type = get_oid(fp, length);
 
 	return oid_type;
 }
@@ -597,20 +591,25 @@ int x509_process_certificate_serial_number(FILE *fp)
  */
 int process_object_identifier(FILE *fp)
 {
-	int oid_type = asn1_process_object_identifier(fp);
-	printf("\n");
+	int oid_type = asn1_print_object_identifier(fp);
 
 	return oid_type;
 }
 
 int x509_process_algorithm_idenfifier(FILE *fp)
 {
+	/* AlgorithmIdentifier ::= SEQUENCE {
+	 *    algorithm OBJECT IDENTIFIER,
+	 *    parameters ANY DEFINED BY algorithm OPTIONAL
+	 * }
+	 */
 	asn1_find_tag(fp, ASN1_TAG_SEQUENCE);
 	int length = asn1_get_length(fp);
 	int offset1, offset2 = 0;
 	offset1 = ftell(fp);
 
 	process_object_identifier(fp);
+	printf("\n");
 
 	offset2 = ftell(fp);
 	length -= offset2 - offset1;
@@ -708,7 +707,7 @@ int process_attributde_type_and_value(FILE *fp)
 	asn1_get_length(fp);
 
 	/* type */
-	int oid_type = asn1_get_object_identifier(fp);
+	int oid_type = asn1_get_oid_type(fp);
 	print_oid_label(oid_type);
 
 	printf("=");
@@ -1320,7 +1319,7 @@ int x509_process_subject_directory_attribute(FILE *fp)
 	asn1_get_length(fp);
 
 	/* type */
-	asn1_process_object_identifier(fp);
+	asn1_print_object_identifier(fp);
 
 	printf(": ");
 
@@ -1335,7 +1334,7 @@ int x509_process_subject_directory_attribute(FILE *fp)
 		break;
 	case ASN1_TAG_OBJECT_IDENTIFIER:
 		ungetc(c, fp);
-		asn1_process_object_identifier(fp);
+		asn1_print_object_identifier(fp);
 		break;
 	default:
 		fprintf(stderr, "Error: Not a valid Attribute\n");
@@ -1607,7 +1606,7 @@ int x509_process_extension(FILE *fp)
 	asn1_get_length(fp);
 
 	printf("    ");
-	int oid_type = asn1_process_object_identifier(fp);
+	int oid_type = asn1_print_object_identifier(fp);
 
 	printf(": ");
 
