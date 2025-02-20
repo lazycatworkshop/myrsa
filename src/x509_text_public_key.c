@@ -416,6 +416,30 @@ int asn1_process_object_identifier(FILE *fp)
 {
 	asn1_find_tag(fp, ASN1_TAG_OBJECT_IDENTIFIER);
 	int length = asn1_get_length(fp);
+
+	uint8_t asn1_oid_value[128];
+	for (int i = 0; i < length; i++) {
+		asn1_oid_value[i] = getc(fp);
+	}
+	uint32_t oid_len = 0;
+	uint32_t oid_value[128];
+
+	decode_asn1_oid(asn1_oid_value, length, oid_value, &oid_len);
+	int oid_type = asn1_lookup_oid(oid_value, oid_len);
+
+	if (oid_type != OID_TYPE_UNKNOWN) {
+		print_oid_desc(oid_type);
+	} else {
+		print_oid(oid_value, oid_len);
+	}
+
+	return oid_type;
+}
+
+int asn1_get_object_identifier(FILE *fp)
+{
+	asn1_find_tag(fp, ASN1_TAG_OBJECT_IDENTIFIER);
+	int length = asn1_get_length(fp);
 	int oid_type = get_oid(fp, length);
 
 	return oid_type;
@@ -574,7 +598,6 @@ int x509_process_certificate_serial_number(FILE *fp)
 int process_object_identifier(FILE *fp)
 {
 	int oid_type = asn1_process_object_identifier(fp);
-	print_oid_desc(oid_type);
 	printf("\n");
 
 	return oid_type;
@@ -685,7 +708,7 @@ int process_attributde_type_and_value(FILE *fp)
 	asn1_get_length(fp);
 
 	/* type */
-	int oid_type = asn1_process_object_identifier(fp);
+	int oid_type = asn1_get_object_identifier(fp);
 	print_oid_label(oid_type);
 
 	printf("=");
@@ -1521,9 +1544,8 @@ int x509_process_extension(FILE *fp)
 	asn1_find_tag(fp, ASN1_TAG_SEQUENCE);
 	asn1_get_length(fp);
 
-	int oid_type = asn1_process_object_identifier(fp);
 	printf("    ");
-	print_oid_desc(oid_type);
+	int oid_type = asn1_process_object_identifier(fp);
 
 	printf(": ");
 
