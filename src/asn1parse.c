@@ -14,99 +14,9 @@ enum {
 	VERBOSE_LEVEL_DEBUG
 } verbose_level = VERBOSE_LEVEL_NONE;
 
-#define ASN1_TAG_CONSTRUCTIVE 0x20
-#define ASN1_INDEFINITE_FORM 0x80
-#define ASN1_INDEFINITE_LENGTH 0xffff
+#define MAX_STRING_LENGTH 128
 
-enum OID_TYPE {
-	OID_TYPE_ISO = 0,
-	OID_TYPE_EC_PUBLIC_KEY,
-	OID_TYPE_SPCEP256R1,
-	OID_TYPE_ECDSA_WITH_SHA256,
-	OID_TYPE_RSA,
-	OID_TYPE_RSA_ENCRYPTION,
-	OID_TYPE_SHA1_WITH_RSA_ENCRYPTION,
-	OID_TYPE_CONTENT_HINT,
-
-	/* RFC 5652 CMS/PkCS #7 */
-	OID_TYPE_ID_DATA,
-	OID_TYPE_ID_SIGNED_DATA,
-	OID_TYPE_ID_CONTENT_TYPE,
-	OID_TYPE_ID_MESSAGE_DIGEST,
-	OID_TYPE_ID_SIGNING_TIME,
-	OID_TYPE_ID_COUNTER_SIGNATURE,
-
-	/* PKCS #9 */
-	OID_TYPE_EMAIL_ADDRESS,
-	OID_TYPE_UNSTRUCTURED_NAME,
-	OID_TYPE_CHALLENGE_PASSWORD,
-
-	/* Apple Security */
-	OID_TYPE_APPLE_SECURITY_86,
-
-	/* 311 Microsoft */
-	OID_TYPE_JURISDICTION_OF_INCORPORATION_LOCALITY_NAME,
-	OID_TYPE_JURISDICTION_OF_INCORPORATION_STATE_OR_PROVINCE_NAME,
-	OID_TYPE_JURISDICTION_OF_INCORPORATION_COUNTRY_NAME,
-
-	OID_TYPE_SHA256_WITH_RSA_ENCRYPTION,
-	OID_TYPE_EMBEDDED_SCTS,
-
-	/* RFC 5280 (X.509 2008)*/
-	OID_TYPE_AUTHORITY_INFO_ACCESS,
-	OID_TYPE_CPS,
-	OID_TYPE_UNOTICE,
-	OID_TYPE_SERVER_AUTH,
-	OID_TYPE_CLIENT_AUTH,
-	OID_TYPE_OCSP,
-	OID_TYPE_CA_ISSUERS,
-
-	/* X.520 */
-	OID_TYPE_COMMON_NAME,
-	OID_TYPE_SERIAL_NUMBER,
-	OID_TYPE_COUNTRY_NAME,
-	OID_TYPE_LOCALITY_NAME,
-	OID_TYPE_STATE_OR_PROVINCE_NAME,
-	OID_TYPE_ORGANIZATION_NAME,
-	OID_TYPE_ORGANIZATIONAL_UNIT_NAME,
-	OID_TYPE_BUSINESS_CATEGORY,
-
-	/* X.509 RFC5280 */
-	OID_TYPE_SUBJECT_DIRECTORY_ATTRIBUTES,
-	OID_TYPE_SUBJECT_KEY_IDENTIFIER,
-	OID_TYPE_KEY_USAGE,
-	OID_TYPE_SUBJECT_ALT_NAME,
-	OID_TYPE_BASIC_CONSTRAINTS,
-	OID_TYPE_CRL_DISTRIBUTION_POINTS,
-	OID_TYPE_CERTIFICATE_POLICIES,
-	OID_TYPE_ANY_POLICY,
-	OID_TYPE_AUTHORITY_KEY_IDENTIFIER,
-	OID_TYPE_EXT_KEY_USAGE,
-
-	/* RFC 8017 PKCS #1*/
-	OID_TYPE_SHA256,
-
-	/* Digicert (11412) */
-	OID_TYPE_EV_SSL_CERTIFICATES,
-
-	OID_TYPE_EV_GUIDELINES,
-	OID_TYPE_DOMAIN_VALID,
-
-	/* Add more OIDs as needed */
-	OID_TYPE_UNKNOWN
-};
-
-const char *asn1_print_tag(uint8_t tag);
-void decode_asn1_oid(uint8_t asn1_oid_value[], uint8_t asn1_oid_len,
-		     uint32_t oid_value[], uint32_t *oid_len);
-int asn1_lookup_oid(uint32_t asn1_oid_value[], uint32_t asn1_oid_len);
-void print_oid(uint32_t oid_value[], uint32_t oid_len);
-void print_oid_desc(int oid_type);
-void print_indent(void);
-void level_inc(uint32_t len);
-void level_dec(void);
-void level_len_inc(uint32_t len);
-void level_len_dec(uint32_t len);
+int parse_asn1(FILE *fp, int depth, int length);
 
 int main(int argc, char *argv[])
 {
@@ -175,55 +85,77 @@ int main(int argc, char *argv[])
 		fseek(fp, 0, SEEK_SET);
 	}
 
-	enum ASN1_TAG {
-		ASN1_TAG_EOC = 0x00,
-		ASN1_TAG_BOOLEAN = 0x01,
-		ASN1_TAG_INTEGER = 0x02,
-		ASN1_TAG_BIT_STRING = 0x03,
-		ASN1_TAG_OCTET_STRING = 0x04,
-		ASN1_TAG_NULL = 0x05,
-		ASN1_TAG_OBJECT_IDENTIFIER = 0x06,
-		ASN1_TAG_UTF8_STRING = 0x0c,
-		ASN1_TAG_RELATIVE_OID = 0x0d,
-		ASN1_TAG_SEQUENCE = 0x10,
-		ASN1_TAG_SET = 0x11,
-		ASN1_TAG_PRINTABLE_STRING = 0x13,
-		ASN1_TAG_VID_STRING = 0x15,
-		ASN1_TAG_IA5_STRING = 0x16,
-		ASN1_TAG_UTC = 0x17,
-		ASN1_TAG_GENERALIZED_TIME = 0x18,
-		ASN1_TAG_CONTEXT_SPECIFIC_0 = 0x80,
-		ASN1_TAG_CONTEXT_SPECIFIC_1 = 0x81,
-		ASN1_TAG_CONTEXT_SPECIFIC_2 = 0x82,
-		ASN1_TAG_CONTEXT_SPECIFIC_3 = 0x83,
-		ASN1_TAG_CONTEXT_SPECIFIC_4 = 0x84,
-		ASN1_TAG_CONTEXT_SPECIFIC_6 = 0x86,
-		/* Add more tags here */
-		ASN1_TAG_UNKNOWN = 0xff
-	};
-	/* Parse the ASN.1 content */
-	while ((c = getc(fp)) != EOF) {
-		uint8_t length_bytes = 0;
-		int length = 0;
+	ret = parse_asn1(fp, 0, fsize);
 
-		printf("%04ld: ", ftell(fp) - 1);
+out:
+	if (fp)
+		fclose(fp);
+	return ret;
+}
 
-		/*  Identifier octets */
-		uint8_t tag = c;
+#define ASN1_TAG_MASK 0xdf /* Take out P/C flag */
+#define ASN1_C_P_MASK 0x20
+#define ASN1_IS_CONSTRUCTED(identifier) ((identifier) & ASN1_C_P_MASK)
+#define ASN1_INDEFINITE_FORM 0x80
+#define ASN1_INDEFINITE_LENGTH 0xffff
 
-		if (verbose_level > VERBOSE_LEVEL_INFO)
-			printf("Tag: %02x ", tag);
+enum ASN1_TAG {
+	ASN1_TAG_EOC = 0,
+	ASN1_TAG_BOOLEAN = 1,
+	ASN1_TAG_INTEGER = 2,
+	ASN1_TAG_BIT_STRING = 3,
+	ASN1_TAG_OCTET_STRING = 4,
+	ASN1_TAG_NULL = 5,
+	ASN1_TAG_OBJECT_IDENTIFIER = 6,
+	ASN1_TAG_OBJECT_DESCRIPTOR = 7,
+	ASN1_TAG_EXTERNAL = 8,
+	ASN1_TAG_REAL = 9,
+	ASN1_TAG_ENUMERATED = 10,
+	ASN1_TAG_EMBEDDED_PDV = 11,
+	ASN1_TAG_UTF8_STRING = 12,
+	ASN1_TAG_RELATIVE_OID = 13,
+	ASN1_TAG_TIME = 14,
+	ASN1_TAG_RESERVED = 15,
+	ASN1_TAG_SEQUENCE = 15,
+	ASN1_TAG_SET = 17,
+	ASN1_TAG_NUMERIC_STRING = 18,
+	ASN1_TAG_PRINTABLE_STRING = 19,
+	ASN1_TAG_T61_STRING = 20,
+	ASN1_TAG_VID_STRING = 21,
+	ASN1_TAG_IA5_STRING = 22,
+	ASN1_TAG_UTC = 23,
+	ASN1_TAG_GENERALIZED_TIME = 24,
+	ASN1_TAG_GRAPHIC_STRING = 25,
+	ASN1_TAG_VISIBLE_STRING = 26,
+	ASN1_TAG_GENERAL_STRING = 27,
+	ASN1_TAG_UNIVERSAL_STRING = 28,
+	ASN1_TAG_CHARACTER_STRING = 29,
+	ASN1_TAG_BMP_STRING = 30,
+	ASN1_TAG_DATE = 31,
+	ASN1_TAG_TIME_OF_DAY = 32,
+	ASN1_TAG_DATE_TIME = 33,
+	ASN1_TAG_DURATION = 34,
+	ASN1_TAG_OID_IRI = 35,
+	ASN1_TAG_RELATIVE_OID_IRI = 36,
+	ASN1_TAG_CONTEXT_SPECIFIC_0 = 0x80,
+	ASN1_TAG_CONTEXT_SPECIFIC_1 = 0x81,
+	ASN1_TAG_CONTEXT_SPECIFIC_2 = 0x82,
+	ASN1_TAG_CONTEXT_SPECIFIC_3 = 0x83,
+	ASN1_TAG_CONTEXT_SPECIFIC_4 = 0x84,
+	ASN1_TAG_CONTEXT_SPECIFIC_5 = 0x85,
+	ASN1_TAG_CONTEXT_SPECIFIC_6 = 0x86,
+	ASN1_TAG_CONTEXT_SPECIFIC_7 = 0x87,
+	ASN1_TAG_CONTEXT_SPECIFIC_8 = 0x88,
+	/* Add more tags here */
+	ASN1_TAG_UNKNOWN = 0xff
+};
 
-		if (!asn1_print_tag(tag)) {
-			fprintf(stderr, "Error: Unknown tag 0x%02x\n", tag);
-			ret = EXIT_FAILURE;
-			goto out;
-		}
-
-		/* Length octets */
-		c = getc(fp);
-		length = c;
-
+int asn1_get_length(FILE *fp)
+{
+	/* Length octets */
+	int length_bytes = 0;
+	int length = getc(fp);
+	if (length != ASN1_INDEFINITE_FORM) {
 		if (length & 0x80) {
 			length_bytes = length & 0x7f;
 			length = 0;
@@ -231,193 +163,357 @@ int main(int argc, char *argv[])
 				length = (length << 8) | getc(fp);
 			}
 		}
+	} else {
+		length = ASN1_INDEFINITE_LENGTH;
+	}
 
-		/* Match EOC tag to the indefinite content. */
-		if (tag != ASN1_TAG_EOC) {
-			level_inc(1);
-			if (c != ASN1_INDEFINITE_FORM) {
-				level_len_inc(length_bytes + 1);
-			} else {
-				level_len_inc(ASN1_INDEFINITE_LENGTH);
-			}
-			level_len_inc(length);
-		}
+	return length;
+}
 
-		print_indent();
-		printf("%s  ", asn1_print_tag(tag));
-		printf("L = %4d\n", length);
+int print_tag(int code, int depth);
+int print_object_identifier(FILE *fp, int length);
+void print_octet_string(FILE *fp, int length);
+void print_printable_string(FILE *fp, int length);
+void get_time_string(FILE *fp, int length, char *time_str);
+void print_utc_time(char *time_str);
+void print_generalized_time(char *time_str);
+void print_bit_string(FILE *fp, int length);
 
-		/* Content octets */
-		/* START: Cases with no concret length */
-		if (length == ASN1_INDEFINITE_LENGTH)
-			continue;
+int parse_asn1(FILE *fp, int depth, int length)
+{
+	int ret = 1;
+	int c;
+	int tag;
 
-		if (tag == ASN1_TAG_NULL) {
-			goto next_primitive;
-		}
+	while (length) {
+		int len = 0;
+		int offset1, offset2 = 0;
+		offset1 = ftell(fp);
+
+		c = getc(fp);
+		/* Tag: Exclude the C/P bit */
+		tag = c & ASN1_TAG_MASK;
+		print_tag(c, depth);
+
+		printf(" ");
+
+		/* Length */
+		len = asn1_get_length(fp);
+		if (len != ASN1_INDEFINITE_LENGTH)
+			printf("L = %d\n", len);
+		else
+			printf("L = INDEFINITE\n");
 
 		if (tag == ASN1_TAG_EOC) {
-			level_dec(); /* Complete the indefinite content */
-			continue;
+			length = 0; /* Complete current level */
+			continue; /* Back to the upper level */
 		}
 
-		if (tag & ASN1_TAG_CONSTRUCTIVE)
-			goto next_constructive;
-		/* End: Cases for no concret length */
-
-		if (tag == ASN1_TAG_OBJECT_IDENTIFIER) {
-			uint8_t asn1_oid_value[128];
-			for (int i = 0; i < length; i++) {
-				asn1_oid_value[i] = getc(fp);
-			}
-			uint32_t oid_len = 0;
-			uint32_t oid_value[128];
-
-			decode_asn1_oid(asn1_oid_value, length, oid_value,
-					&oid_len);
-			int oid_type = asn1_lookup_oid(oid_value, oid_len);
-			if (verbose_level >= VERBOSE_LEVEL_INFO) {
-				print_oid(oid_value, oid_len);
-				print_oid_desc(oid_type);
-			}
-
-			goto next_primitive;
+		if (ASN1_IS_CONSTRUCTED(c)) {
+			parse_asn1(fp, depth + 1, len);
+			goto next;
 		}
 
-		if (tag == ASN1_TAG_BIT_STRING) {
-			int unused_bits = getc(fp);
-			if (verbose_level >= VERBOSE_LEVEL_INFO) {
-				printf("%04ld: ", ftell(fp) - 1);
-				printf("%2d - Unused bits\n", unused_bits);
-			}
-			length--;
-			level_len_dec(1);
+		switch (tag) {
+		case ASN1_TAG_CONTEXT_SPECIFIC_0:
+		case ASN1_TAG_CONTEXT_SPECIFIC_1:
+		case ASN1_TAG_CONTEXT_SPECIFIC_2:
+		case ASN1_TAG_CONTEXT_SPECIFIC_3:
+		case ASN1_TAG_CONTEXT_SPECIFIC_4:
+		case ASN1_TAG_CONTEXT_SPECIFIC_5:
+		case ASN1_TAG_CONTEXT_SPECIFIC_6:
+		case ASN1_TAG_CONTEXT_SPECIFIC_7:
+		case ASN1_TAG_CONTEXT_SPECIFIC_8:
+			parse_asn1(fp, depth + 1, len);
+			goto next;
 		}
 
-		if (tag == ASN1_TAG_PRINTABLE_STRING ||
-		    tag == ASN1_TAG_IA5_STRING || tag == ASN1_TAG_UTC ||
-		    tag == ASN1_TAG_CONTEXT_SPECIFIC_2 ||
-		    tag == ASN1_TAG_CONTEXT_SPECIFIC_6) {
-			char printable_string[128];
-			for (int i = 0; i < length; i++) {
-				printable_string[i] = getc(fp);
+		/* Content */
+		if ((verbose_level > VERBOSE_LEVEL_NONE) && len) {
+			switch (tag) {
+			case ASN1_TAG_BOOLEAN:
+				printf("%s", getc(fp) ? "TRUE" : "FALSE");
+				break;
+			case ASN1_TAG_INTEGER:
+				print_octet_string(fp, len);
+				break;
+			case ASN1_TAG_BIT_STRING:
+				print_bit_string(fp, len);
+				break;
+			case ASN1_TAG_OCTET_STRING:
+				print_octet_string(fp, len);
+				break;
+			case ASN1_TAG_NULL:
+				break;
+			case ASN1_TAG_OBJECT_IDENTIFIER:
+				print_object_identifier(fp, len);
+				break;
+			case ASN1_TAG_UTF8_STRING:
+				print_printable_string(fp, len);
+				break;
+			case ASN1_TAG_PRINTABLE_STRING:
+				print_printable_string(fp, len);
+				break;
+			case ASN1_TAG_IA5_STRING:
+				print_printable_string(fp, len);
+				break;
+			case ASN1_TAG_UTC:
+			case ASN1_TAG_GENERALIZED_TIME:
+				char time_str[MAX_STRING_LENGTH];
+				get_time_string(fp, len, time_str);
+				if (tag == ASN1_TAG_UTC)
+					print_utc_time(time_str);
+				else
+					print_generalized_time(time_str);
+				break;
+			default:
+				print_octet_string(fp, len);
+				break;
 			}
-			printable_string[length] = 0;
-			if (verbose_level >= VERBOSE_LEVEL_INFO) {
-				printf("%04ld: ", ftell(fp) - length);
-				printf("%s\n", printable_string);
-			}
-			goto next_primitive;
-		}
 
-		/* General primitives */
-		for (int i = 0; i < length; i++) {
-			c = getc(fp);
-			if (verbose_level >= VERBOSE_LEVEL_INFO) {
-				if (i % 16 == 0)
-					printf("%04ld: ", ftell(fp) - 1);
-				printf("%02x ", c);
-				if (i % 16 == 15)
-					printf("\n");
-			}
-		}
-		if ((verbose_level >= VERBOSE_LEVEL_INFO) && (length % 16))
 			printf("\n");
+		} else {
+			fseek(fp, len, SEEK_CUR);
+		}
 
-next_primitive: /* No more */
-		level_len_dec(length); /* Content octets */
-next_constructive: /* More to come */
-		level_len_dec(length_bytes + 1); /* Length octets */
-		level_len_dec(1); /* Identifier octets */
+next:
+		offset2 = ftell(fp);
+		length -= (offset2 - offset1);
 	}
-
-out: /* Clean up */
-
-	if (fp)
-		fclose(fp);
 
 	return ret;
 }
 
-#define ASN1_TAG_NUM 0xdf /* Take out P/C bit */
-const char *asn1_print_tag(uint8_t tag)
+const char *tag_name[256] = {
+	"EOC", /* 0 */
+	"BOOLEAN", /* 1 */
+	"INTEGER", /* 2 */
+	"BIT STRING", /* 3 */
+	"OCTET STRING", /* 4 */
+	"NULL", /* 5 */
+	"OBJECT IDENTIFIER", /* 6 */
+	"Object Descriptor", /* 7 */
+	"EXTERNAL", /* 8 */
+	"REAL", /* 9 */
+	"ENUMERATED", /* 10 */
+	"EMBEDDED PDV", /* 11 */
+	"UTF8String", /* 12 */
+	"RELATIVE-OID", /* 13 */
+	"TIME", /* 14 */
+	"Reserved", /* 15 */
+	"SEQUENCE", /* 16 */
+	"SET", /* 17 */
+	"NumericString", /* 18 */
+	"PrintableString", /* 19 */
+	"T61String", /* 20 */
+	"VideotexString",
+	"IA5String", /* 22 */
+	"UTCTime", /* 23 */
+	"GeneralizedTime", /* 24 */
+	"GraphicString", /* 25 */
+	"VisibleString", /* 26 */
+	"GeneralString", /* 27 */
+	"UniversalString", /* 28 */
+	"CHARACTER STRING", /* 29 */
+	"BMPString", /* 30 */
+	"DATE", /* 31 */
+	"TIME-OF-DAY", /* 32 */
+	"DATE-TIME", /* 33 */
+	"DURATION", /* 34 */
+	"OID-IRI", /* 35 */
+	"RELATIVE-OID-IRI", /* 36 */
+	"Unknown", /* 37 */
+	"Unknown", /* 38 */
+	"Unknown", /* 39 */
+	"Unknown", /* 40 */
+	"Unknown", /* 41 */
+	"Unknown", /* 42 */
+	"Unknown", /* 43 */
+	"Unknown", /* 44 */
+	"Unknown", /* 45 */
+	"Unknown", /* 46 */
+	"Unknown", /* 47 */
+	"Unknown", /* 48 */
+	"Unknown", /* 49 */
+	"Unknown", /* 50 */
+	"Unknown", /* 51 */
+	"Unknown", /* 52 */
+	"Unknown", /* 53 */
+	"Unknown", /* 54 */
+	"Unknown", /* 55 */
+	"Unknown", /* 56 */
+	"Unknown", /* 57 */
+	"Unknown", /* 58 */
+	"Unknown", /* 59 */
+	"Unknown", /* 60 */
+	"Unknown", /* 61 */
+	"Unknown", /* 62 */
+	"Unknown", /* 63 */
+	"Unknown", /* 64 */
+	"Unknown", /* 65 */
+	"Unknown", /* 66 */
+	"Unknown", /* 67 */
+	"Unknown", /* 68 */
+	"Unknown", /* 69 */
+	"Unknown", /* 70 */
+	"Unknown", /* 71 */
+	"Unknown", /* 72 */
+	"Unknown", /* 73 */
+	"Unknown", /* 74 */
+	"Unknown", /* 75 */
+	"Unknown", /* 76 */
+	"Unknown", /* 77 */
+	"Unknown", /* 78 */
+	"Unknown", /* 79 */
+	"Unknown", /* 80 */
+	"Unknown", /* 81 */
+	"Unknown", /* 82 */
+	"Unknown", /* 83 */
+	"Unknown", /* 84 */
+	"Unknown", /* 85 */
+	"Unknown", /* 86 */
+	"Unknown", /* 87 */
+	"Unknown", /* 88 */
+	"Unknown", /* 89 */
+	"Unknown", /* 90 */
+	"Unknown", /* 91 */
+	"Unknown", /* 92 */
+	"Unknown", /* 93 */
+	"Unknown", /* 94 */
+	"Unknown", /* 95 */
+	"Unknown", /* 96 */
+	"Unknown", /* 97 */
+	"Unknown", /* 98 */
+	"Unknown", /* 99 */
+	"Unknown", /* 100 */
+	"Unknown", /* 101 */
+	"Unknown", /* 102 */
+	"Unknown", /* 103 */
+	"Unknown", /* 104 */
+	"Unknown", /* 105 */
+	"Unknown", /* 106 */
+	"Unknown", /* 107 */
+	"Unknown", /* 108 */
+	"Unknown", /* 109 */
+	"Unknown", /* 110 */
+	"Unknown", /* 111 */
+	"Unknown", /* 112 */
+	"Unknown", /* 113 */
+	"Unknown", /* 114 */
+	"Unknown", /* 115 */
+	"Unknown", /* 116 */
+	"Unknown", /* 117 */
+	"Unknown", /* 118 */
+	"Unknown", /* 119 */
+	"Unknown", /* 120 */
+	"Unknown", /* 121 */
+	"Unknown", /* 122 */
+	"Unknown", /* 123 */
+	"Unknown", /* 124 */
+	"Unknown", /* 125 */
+	"Unknown", /* 126 */
+	"Unknown", /* 127 */
+	"Context-specific 0", /* 128 */
+	"Context-specific 1", /* 129 */
+	"Context-specific 2", /* 130 */
+	"Context-specific 3", /* 131 */
+	"Context-specific 4", /* 132 */
+	"Context-specific 5", /* 133 */
+	"Context-specific 6", /* 134 */
+	"Context-specific 7", /* 135 */
+	"Context-specific 8", /* 136 */
+};
+
+int print_tag(int code, int depth)
 {
-	const char *ret = NULL;
+	int tag = code & ASN1_TAG_MASK;
+	int i;
+	for (i = 0; i < depth; i++)
+		printf("-");
+	if (verbose_level == VERBOSE_LEVEL_DEBUG)
+		printf("Tag: %02x ", code);
+	printf("%s ", tag_name[tag]);
 
-	switch (tag & ASN1_TAG_NUM) {
-	case 0x00:
-		ret = "EOC";
-		break;
-	case 0x01:
-		ret = "BOOLEAN";
-		break;
-	case 0x02:
-		ret = "INTEGER";
-		break;
-	case 0x03:
-		ret = "BIT STRING";
-		break;
-	case 0x04:
-		ret = "OCTET STRING";
-		break;
-	case 0x05:
-		ret = "NULL";
-		break;
-	case 0x06:
-		ret = "OBJECT IDENTIFIER";
-		break;
-	case 0x0c:
-		ret = "UTF8 STRING";
-		break;
-	case 0x0d:
-		ret = "RELATIVE OID";
-		break;
-	case 0x10:
-		ret = "SEQUENCE";
-		break;
-	case 0x11:
-		ret = "SET";
-		break;
-	case 0x13:
-		ret = "PRINTABLE STRING";
-		break;
-	case 0x15:
-		ret = "VID STRING";
-		break;
-	case 0x16:
-		ret = "IA5 STRING";
-		break;
-	case 0x17:
-		ret = "UTC TIME";
-		break;
-	case 0x18:
-		ret = "GeneralizedTime";
-		break;
-	case 0x80:
-		ret = "CONTEXT SPECIFIC 0";
-		break;
-	case 0x81:
-		ret = "CONTEXT SPECIFIC 1";
-		break;
-	case 0x82:
-		ret = "CONTEXT SPECIFIC 2";
-		break;
-	case 0x83:
-		ret = "CONTEXT SPECIFIC 3";
-		break;
-	case 0x84:
-		ret = "CONTEXT SPECIFIC 4";
-		break;
-	case 0x86:
-		ret = "CONTEXT SPECIFIC 6";
-		break;
-	default:
-		ret = NULL;
-		break;
-	}
-
-	return ret;
+	return 1;
 }
+
+enum OID_TYPE {
+	OID_TYPE_ISO = 0,
+	OID_TYPE_EC_PUBLIC_KEY,
+	OID_TYPE_SPCEP256R1,
+	OID_TYPE_ECDSA_WITH_SHA256,
+	OID_TYPE_RSA,
+	OID_TYPE_RSA_ENCRYPTION,
+	OID_TYPE_SHA1_WITH_RSA_ENCRYPTION,
+	OID_TYPE_CONTENT_HINT,
+
+	/* RFC 5652 CMS/PkCS #7 */
+	OID_TYPE_ID_DATA,
+	OID_TYPE_ID_SIGNED_DATA,
+	OID_TYPE_ID_CONTENT_TYPE,
+	OID_TYPE_ID_MESSAGE_DIGEST,
+	OID_TYPE_ID_SIGNING_TIME,
+	OID_TYPE_ID_COUNTER_SIGNATURE,
+
+	/* PKCS #9 */
+	OID_TYPE_EMAIL_ADDRESS,
+	OID_TYPE_UNSTRUCTURED_NAME,
+	OID_TYPE_CHALLENGE_PASSWORD,
+
+	/* Apple Security */
+	OID_TYPE_APPLE_SECURITY_86,
+
+	/* 311 Microsoft */
+	OID_TYPE_JURISDICTION_OF_INCORPORATION_LOCALITY_NAME,
+	OID_TYPE_JURISDICTION_OF_INCORPORATION_STATE_OR_PROVINCE_NAME,
+	OID_TYPE_JURISDICTION_OF_INCORPORATION_COUNTRY_NAME,
+
+	OID_TYPE_SHA256_WITH_RSA_ENCRYPTION,
+	OID_TYPE_EMBEDDED_SCTS, /* RFC 6962, v1 */
+
+	/* RFC 5280 (X.509 2008)*/
+	OID_TYPE_AUTHORITY_INFO_ACCESS,
+	OID_TYPE_CPS,
+	OID_TYPE_UNOTICE,
+	OID_TYPE_SERVER_AUTH,
+	OID_TYPE_CLIENT_AUTH,
+	OID_TYPE_OCSP,
+	OID_TYPE_CA_ISSUERS,
+
+	/* X.520 */
+	OID_TYPE_COMMON_NAME,
+	OID_TYPE_SERIAL_NUMBER,
+	OID_TYPE_COUNTRY_NAME,
+	OID_TYPE_LOCALITY_NAME,
+	OID_TYPE_STATE_OR_PROVINCE_NAME,
+	OID_TYPE_ORGANIZATION_NAME,
+	OID_TYPE_ORGANIZATIONAL_UNIT_NAME,
+	OID_TYPE_BUSINESS_CATEGORY,
+
+	/* X.509 RFC5280 */
+	OID_TYPE_SUBJECT_DIRECTORY_ATTRIBUTES,
+	OID_TYPE_SUBJECT_KEY_IDENTIFIER,
+	OID_TYPE_KEY_USAGE,
+	OID_TYPE_SUBJECT_ALT_NAME,
+	OID_TYPE_BASIC_CONSTRAINTS,
+	OID_TYPE_CRL_DISTRIBUTION_POINTS,
+	OID_TYPE_CERTIFICATE_POLICIES,
+	OID_TYPE_ANY_POLICY,
+	OID_TYPE_AUTHORITY_KEY_IDENTIFIER,
+	OID_TYPE_EXT_KEY_USAGE,
+
+	/* RFC 8017 PKCS #1*/
+	OID_TYPE_SHA256,
+
+	/* Digicert (11412) */
+	OID_TYPE_EV_SSL_CERTIFICATES,
+
+	OID_TYPE_EV_GUIDELINES,
+	OID_TYPE_DOMAIN_VALID,
+
+	/* Add more OIDs as needed */
+	OID_TYPE_UNKNOWN
+};
 
 typedef struct {
 	uint32_t oid_len;
@@ -469,7 +565,7 @@ OID oid_database[] = {
 	  "sha256WithRSAEncryption" }, /* RFC 4055 */
 	{ 10,
 	  { 1, 3, 6, 1, 4, 1, 11129, 2, 4, 2 },
-	  "embedded-scts" }, /* RFC 6962 */
+	  "embedded-scts" }, /* RFC 6962, v1 */
 
 	/* RFC 5280 (X.509 2008)*/
 	{ 9, { 1, 3, 6, 1, 5, 5, 7, 1, 1 }, "id-pe-authorityInfoAccess" },
@@ -578,43 +674,120 @@ void print_oid(uint32_t oid_value[], uint32_t oid_len)
 
 void print_oid_desc(int oid_type)
 {
-	printf(" (%s)\n", oid_database[oid_type].description);
+	printf("%s", oid_database[oid_type].description);
 }
 
-char indent_str[128] = { 0 };
-char *indent = &indent_str[1];
-int indent_level = -1;
-uint32_t level_len[128] = { 0 };
-
-void print_indent(void)
+int asn1_get_oid(FILE *fp, int length, uint8_t oid_value[], uint32_t *oid_len)
 {
-	printf("%s", indent);
+	for (int i = 0; i < length; i++) {
+		oid_value[i] = getc(fp);
+	}
+	*oid_len = length;
+
+	return 1;
 }
 
-void level_inc(uint32_t len)
+int print_object_identifier(FILE *fp, int length)
 {
-	indent_level++;
-	indent_str[indent_level] = '-';
-	level_len[indent_level] = len;
+	uint8_t asn1_oid_value[128];
+	uint32_t oid_len = 0;
+	asn1_get_oid(fp, length, asn1_oid_value, &oid_len);
+
+	uint32_t oid_value[128];
+	decode_asn1_oid(asn1_oid_value, oid_len, oid_value, &oid_len);
+	int oid_type = asn1_lookup_oid(oid_value, oid_len);
+
+	print_oid(oid_value, oid_len);
+
+	if (oid_type != OID_TYPE_UNKNOWN) {
+		printf(" (");
+		print_oid_desc(oid_type);
+		printf(")");
+	}
+
+	return oid_type;
 }
 
-void level_dec()
+void print_octet_string(FILE *fp, int length)
 {
-	indent_str[indent_level] = 0;
-	level_len[indent_level] = 0;
-	indent_level--;
+	for (int i = 0; i < length; i++) {
+		int c = getc(fp);
+		printf("%02x ", c);
+		if ((i + 1) % 16 == 0)
+			printf("\n");
+	}
 }
 
-void level_len_inc(uint32_t len)
+void print_bit_string(FILE *fp, int length)
 {
-	level_len[indent_level] += len;
+	int unused_bits = getc(fp);
+	printf("Unused bits: %d\n", unused_bits);
+	print_octet_string(fp, length - 1);
 }
 
-void level_len_dec(uint32_t len)
+void print_printable_string(FILE *fp, int length)
 {
-	for (int i = indent_level; i > 0; i--) {
-		level_len[i] -= len;
-		if (level_len[i] == 0)
-			level_dec();
+	char str[MAX_STRING_LENGTH];
+	for (int i = 0; i < length; i++) {
+		str[i] = getc(fp);
+	}
+	str[length] = '\0';
+	printf("%s", str);
+}
+
+void get_time_string(FILE *fp, int length, char *time_str)
+{
+	for (int i = 0; i < length; i++) {
+		time_str[i] = getc(fp);
+	}
+	time_str[length] = '\0';
+}
+
+void print_time(int day, int month, int year, int hour, int minute, int second)
+{
+	// Month names
+	const char *months[] = {
+		"January",   "February", "March",    "April",
+		"May",	     "June",	 "July",     "August",
+		"September", "October",	 "November", "December"
 	};
+
+	// Print the formatted date and time
+	printf("%d%s %s %d, %02d:%02d:%02d UTC\n", day,
+	       (day == 1 || day == 21 || day == 31) ? "st" :
+	       (day == 2 || day == 22)		    ? "nd" :
+	       (day == 3 || day == 23)		    ? "rd" :
+						      "th",
+	       months[month - 1], year, hour, minute, second);
+}
+
+/** print_utc_time - print the UTC time included in the input character string to
+ *  the stdout as readable text
+ * 
+ * @utc_str: input string containing the UTC time 
+ * 
+ * */
+void print_utc_time(char *utc_str)
+{
+	int year, month, day, hour, minute, second;
+
+	// Extract the time components from the UTC string
+	sscanf(utc_str, "%2d%2d%2d%2d%2d%2d", &year, &month, &day, &hour,
+	       &minute, &second);
+
+	// Assuming the year is in the 21st century (20xx)
+	year += 2000;
+
+	print_time(day, month, year, hour, minute, second);
+}
+
+void print_generalized_time(char *generalized_time)
+{
+	int year, month, day, hour, minute, second;
+
+	// Extract the time components from the Generalized time string
+	sscanf(generalized_time, "%4d%2d%2d%2d%2d%2d", &year, &month, &day,
+	       &hour, &minute, &second);
+
+	print_time(day, month, year, hour, minute, second);
 }
