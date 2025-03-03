@@ -1,14 +1,9 @@
-/** p7b_extract_cert.c - A program to extract the X.509 certificates from
- * PKCS #7 files.
+/** p7b_extract_sig - A program to retrieve the singerInfos' signature 
+ * from a PKCS #7 file.
  * 
- * This program will extract the first X.509 certificates from a PKCS #7 file.
- * The PKCS #7 file can be in DER or PEM format. This is mainly used as a
- * tool to create test cases for x509_text_public_key.c.
- * 
- * The output will be in DER format.
- * 
- * Usage: p7b_extract_cert -i <cms file> -o <cert file>
+ * Usage: p7b_extract_sig -i <cms file> -o <sig file>
  */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -37,39 +32,53 @@ typedef struct {
 	signed_data_content content;
 } signed_data;
 
+#define MAX_SINGER_INFO_NO 3
+
+typedef struct {
+	ASN1 version;
+	ASN1 sid;
+	ASN1 digestAlgorithm;
+	ASN1 signedAttr;
+	ASN1 signatureAlgorithm;
+	ASN1 signature;
+	ASN1 unsignedAttr;
+} signer_info_t;
+
 void p7b_init(signed_data *pkcs7)
 {
 	memset(pkcs7, 0, sizeof(*pkcs7));
 };
 
 int process_pkcs7_buf(signed_data *pkcs7, uint8_t *buf, size_t len);
+int process_signer_infos(ASN1 *singer_infos, signer_info_t *singer_info,
+			 int *max_singer_info_no);
 int main(int argc, char *argv[])
 {
 	int ret = EXIT_SUCCESS;
 	int opt;
 	char *cms_file = NULL;
-	char *cert_file = NULL;
+	char *sig_file = NULL;
 	FILE *cms_fp = NULL;
-	FILE *cert_fp = NULL;
+	FILE *sig_fp = NULL;
 	while ((opt = getopt(argc, argv, "i:o:")) != -1) {
 		switch (opt) {
 		case 'i':
 			cms_file = optarg;
 			break;
 		case 'o':
-			cert_file = optarg;
+			sig_file = optarg;
 			break;
 		default:
 			fprintf(stderr,
-				"Usage: %s -i <cms file> -o <cert file>\n",
+				"Usage: %s -i <cms file> -o <sig file>\n",
 				argv[0]);
 			ret = EXIT_FAILURE;
 			goto out;
 		}
 	}
 
-	if (cms_file == NULL || cert_file == NULL) {
-		fprintf(stderr, "Usage: %s -i <cms file> -o <cert file>\n",
+	if (cms_file == NULL || sig_file == NULL) {
+		fprintf(stderr, "Usage: %s -i <cms file> -o <sig file>\n",
 			argv[0]);
 		ret = EXIT_FAILURE;
 		goto out;
@@ -83,9 +92,9 @@ int main(int argc, char *argv[])
 		goto out;
 	}
 
-	cert_fp = fopen(cert_file, "w");
-	if (cert_fp == NULL) {
-		fprintf(stderr, "Error: Cannot open file %s: %s\n", cert_file,
+	sig_fp = fopen(sig_file, "w");
+	if (sig_fp == NULL) {
+		fprintf(stderr, "Error: Cannot open file %s: %s\n", sig_file,
 			strerror(errno));
 		ret = EXIT_FAILURE;
 		goto out;
@@ -106,17 +115,26 @@ int main(int argc, char *argv[])
 	fread(pkcs7.buf, 1, cms_size, cms_fp);
 
 	int error = process_pkcs7_buf(&pkcs7, pkcs7.buf, cms_size);
-	if (error <= 0) {
-		fprintf(stderr, "process_pkcs7_buf(): %d\n ", error);
+	if (error < 0) {
+		fprintf(stderr, "Error: failed to process PKCS#7 file\n");
 		ret = EXIT_FAILURE;
 		goto out;
 	}
 
-	if (fwrite(pkcs7.content.certificates.value, 1,
-		   pkcs7.content.certificates.length,
-		   cert_fp) != pkcs7.content.certificates.length) {
-		fprintf(stderr,
-			"Error: failed to write the certificate to the output file: %s\n",
+	signer_info_t signer_info;
+	int no = 0;
+	error = process_signer_infos(&pkcs7.content.signerInfos, &signer_info,
+				     &no);
+	if (error < 0) {
+		fprintf(stderr, "Error: failed to process singerInfos\n");
+		ret = EXIT_FAILURE;
+		goto out;
+	}
+
+	error = fwrite(signer_info.signature.value, 1,
+		       signer_info.signature.length, sig_fp);
+	if (error < 0) {
+		fprintf(stderr, "Error: failed to write signature: %s\n",
 			strerror(errno));
 		ret = EXIT_FAILURE;
 		goto out;
@@ -125,8 +143,8 @@ int main(int argc, char *argv[])
 out:
 	if (cms_fp)
 		fclose(cms_fp);
-	if (cert_fp)
-		fclose(cert_fp);
+	if (sig_fp)
+		fclose(sig_fp);
 	return ret;
 }
 
@@ -456,5 +474,80 @@ int asn1_walk_thru(struct memfp *mp, int length)
 		ret += len1;
 	}
 
+	return ret;
+}
+
+typedef struct {
+	ASN1 algorithm;
+	ASN1 SignatureValue;
+} Signature;
+
+int process_signer_infos(ASN1 *signer_infos, signer_info_t *signer_info,
+			 int *signer_info_no)
+{
+	int ret = 0;
+	struct memfp mp;
+	memfp_open(&mp, signer_infos->value, signer_infos->length);
+
+	int offset1, offset2;
+	*signer_info_no = 0;
+	int length = signer_infos->length;
+	while (length > 0) {
+		offset1 = mtell(&mp);
+
+		mgetc(&mp); /* SEQUENCE */
+		asn1_get_length(&mp);
+
+		ret = load_component(&mp, &signer_info->version);
+		if (ret <= 0)
+			goto out;
+
+		ret = load_component(&mp, &signer_info->sid);
+		if (ret <= 0)
+			goto out;
+
+		ret = load_component(&mp, &signer_info->digestAlgorithm);
+		if (ret <= 0)
+			goto out;
+
+		/* signerAttr is optional */
+		int c = mgetc(&mp);
+		int tag = c & ASN1_TAG_MASK;
+		if (tag == ASN1_TAG_CONTEXT_SPECIFIC_0) {
+			mungetc(&mp);
+			ret = load_component(&mp, &signer_info->signedAttr);
+			if (ret <= 0)
+				goto out;
+		} else {
+			mungetc(&mp);
+		}
+
+		ret = load_component(&mp, &signer_info->signatureAlgorithm);
+		if (ret <= 0)
+			goto out;
+
+		ret = load_component(&mp, &signer_info->signature);
+		if (ret <= 0)
+			goto out;
+
+		/* unsignedAttr is optional */
+		c = mgetc(&mp);
+		tag = c & ASN1_TAG_MASK;
+		if (tag == ASN1_TAG_CONTEXT_SPECIFIC_1) {
+			mungetc(&mp);
+			ret = load_component(&mp, &signer_info->unsignedAttr);
+			if (ret <= 0)
+				goto out;
+		} else {
+			mungetc(&mp);
+		}
+
+		(*signer_info_no)++;
+
+		offset2 = mtell(&mp);
+		length -= offset2 - offset1;
+	}
+out:
+	memfp_close(&mp);
 	return ret;
 }

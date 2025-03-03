@@ -32,7 +32,9 @@ EXECUTABLES=demo_rsa_keys \
 	    myrsa_sha1 \
 	    csr_text \
 	    p7b_extract_cert \
-	    p7b_text
+	    p7b_text \
+	    p7b_extract_sig \
+	    p7b_extract_signed_attrs
 	    
 demo_rsa_keys_SOURCES=$(SRC_DIR)/demo_rsa_keys.c $(SRC_DIR)/myrsa.c  $(SRC_DIR)/myrsa_math.c $(SRC_DIR)/big_number.c
 demo_rsa_sign_SOURCES=$(SRC_DIR)/demo_rsa_sign.c $(SRC_DIR)/myrsa.c $(SRC_DIR)/myrsa_math.c $(SRC_DIR)/mycrc.c $(SRC_DIR)/big_number.c
@@ -114,6 +116,12 @@ p7b_extract_cert: $(SRC_DIR)/p7b_extract_cert.c
 	$(CC) $(CFLAGS) $^ -o $(BIN_DIR)/$@
 
 p7b_text: $(SRC_DIR)/p7b_text.c
+	$(CC) $(CFLAGS) $^ -o $(BIN_DIR)/$@
+
+p7b_extract_sig: $(SRC_DIR)/p7b_extract_sig.c
+	$(CC) $(CFLAGS) $^ -o $(BIN_DIR)/$@
+
+p7b_extract_signed_attrs: $(SRC_DIR)/p7b_extract_signed_attrs.c
 	$(CC) $(CFLAGS) $^ -o $(BIN_DIR)/$@
 
 # Compile test sources into test binaries

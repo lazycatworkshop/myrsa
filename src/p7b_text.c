@@ -2184,6 +2184,7 @@ int process_signed_attribute(FILE *fp)
 			break;
 
 		default:
+			length = asn1_get_length(fp);
 			print_octet_string(fp, length);
 			break;
 		}
