@@ -2166,8 +2166,8 @@ int process_signed_attribute(FILE *fp)
 		case OID_TYPE_ID_MESSAGE_DIGEST:
 			/* MessageDigest ::= OCTET STRING*/
 			asn1_find_tag(fp, ASN1_TAG_OCTET_STRING);
-			int length = asn1_get_length(fp);
-			print_octet_string(fp, length);
+			int len = asn1_get_length(fp);
+			print_octet_string(fp, len);
 			break;
 		case OID_TYPE_CONTENT_HINT:
 			/* ContentHints ::= SEQUENCE {
@@ -2184,7 +2184,6 @@ int process_signed_attribute(FILE *fp)
 			break;
 
 		default:
-			length = asn1_get_length(fp);
 			print_octet_string(fp, length);
 			break;
 		}
