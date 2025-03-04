@@ -1221,12 +1221,12 @@ int x509_process_general_name(FILE *fp)
 	int tag = c & ASN1_TAG_MASK;
 	int length = asn1_get_length(fp);
 	switch (tag) {
+	case ASN1_TAG_CONTEXT_SPECIFIC_1:
 	case ASN1_TAG_CONTEXT_SPECIFIC_2:
 	case ASN1_TAG_CONTEXT_SPECIFIC_6:
 		print_ia5_string(fp, length);
 		break;
 	case ASN1_TAG_CONTEXT_SPECIFIC_0:
-	case ASN1_TAG_CONTEXT_SPECIFIC_1:
 	case ASN1_TAG_CONTEXT_SPECIFIC_3:
 	case ASN1_TAG_CONTEXT_SPECIFIC_4:
 	case ASN1_TAG_CONTEXT_SPECIFIC_5:
