@@ -455,6 +455,8 @@ enum OID_TYPE {
 	OID_TYPE_ID_SIGNING_TIME,
 	OID_TYPE_ID_COUNTER_SIGNATURE,
 
+	OID_TYPE_SMIME_CAPABILITIES, /* RFC 8551*/
+
 	/* PKCS #9 */
 	OID_TYPE_EMAIL_ADDRESS,
 	OID_TYPE_UNSTRUCTURED_NAME,
@@ -540,6 +542,10 @@ OID oid_database[] = {
 	{ 7, { 1, 2, 840, 113549, 1, 9, 4 }, "id_messageDigest" },
 	{ 7, { 1, 2, 840, 113549, 1, 9, 5 }, "id_signingTime" },
 	{ 7, { 1, 2, 840, 113549, 1, 9, 6 }, "id_counterSignature" },
+
+	{ 7,
+	  { 1, 2, 840, 113549, 1, 9, 15 },
+	  "smimeCapabilities" }, /* RFC 8551 */
 
 	/* PKCS #9 */
 	{ 7, { 1, 2, 840, 113549, 1, 9, 1 }, "pkcs-9-ub-emailAddress" },
