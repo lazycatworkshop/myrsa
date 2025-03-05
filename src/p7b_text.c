@@ -170,6 +170,8 @@ enum OID_TYPE {
 	OID_TYPE_ID_SIGNING_TIME,
 	OID_TYPE_ID_COUNTER_SIGNATURE,
 
+	OID_TYPE_SMIME_CAPABILITIES, /* RFC 8551*/
+
 	/* PKCS #9 */
 	OID_TYPE_EMAIL_ADDRESS,
 	OID_TYPE_UNSTRUCTURED_NAME,
@@ -177,6 +179,10 @@ enum OID_TYPE {
 
 	/* RFC 6211 */
 	OID_TYPE_CMS_ALGORITHM_PROTECTION,
+
+	/* RFC 8018 */
+	OID_TYPE_RC2_CBC,
+	OID_TYPE_DES_EDE3_CBC,
 
 	/* Apple Security */
 	OID_TYPE_APPLE_SECURITY_86,
@@ -197,6 +203,9 @@ enum OID_TYPE {
 	OID_TYPE_CLIENT_AUTH,
 	OID_TYPE_OCSP,
 	OID_TYPE_CA_ISSUERS,
+
+	/* RFC 8018 */
+	OID_TYPE_DES_CBC,
 
 	/* X.520 */
 	OID_TYPE_COMMON_NAME,
@@ -219,6 +228,11 @@ enum OID_TYPE {
 	OID_TYPE_ANY_POLICY,
 	OID_TYPE_AUTHORITY_KEY_IDENTIFIER,
 	OID_TYPE_EXT_KEY_USAGE,
+
+	/* RFC 3565 */
+	OID_TYPE_AES128_CBC,
+	OID_TYPE_AES192_CBC,
+	OID_TYPE_AES256_CBC,
 
 	/* RFC 8017 PKCS #1*/
 	OID_TYPE_SHA256,
@@ -259,6 +273,10 @@ OID oid_database[] = {
 	{ 7, { 1, 2, 840, 113549, 1, 9, 5 }, "id_signingTime" },
 	{ 7, { 1, 2, 840, 113549, 1, 9, 6 }, "id_counterSignature" },
 
+	{ 7,
+	  { 1, 2, 840, 113549, 1, 9, 15 },
+	  "smimeCapabilities" }, /* RFC 8551 */
+
 	/* PKCS #9 */
 	{ 7, { 1, 2, 840, 113549, 1, 9, 1 }, "pkcs-9-ub-emailAddress" },
 	{ 7, { 1, 2, 840, 113549, 1, 9, 2 }, "pkcs-9-ub-unstructuredName" },
@@ -266,6 +284,10 @@ OID oid_database[] = {
 
 	/* RFC 6211 */
 	{ 7, { 1, 2, 840, 113549, 1, 9, 52 }, "id-aa-CMSAlgorithmProtection" },
+
+	/* RFC 8018 */
+	{ 6, { 1, 2, 840, 113549, 3, 2 }, "rc2CBC" },
+	{ 6, { 1, 2, 840, 113549, 3, 7 }, "des-EDE3-CBC" },
 
 	/* Apple Security */
 	{ 7, { 1, 2, 840, 113635, 100, 6, 86 }, "appleSecurity(6)?(86)" },
@@ -297,6 +319,9 @@ OID oid_database[] = {
 	{ 9, { 1, 3, 6, 1, 5, 5, 7, 48, 1 }, "id-ad-ocsp" },
 	{ 9, { 1, 3, 6, 1, 5, 5, 7, 48, 2 }, "id-ad-caIssuers" },
 
+	/* RFC 8018 */
+	{ 6, { 1, 3, 14, 3, 2, 7 }, "desCBC" },
+
 	/* X.520 */
 	{ 4, { 2, 5, 4, 3 }, "id-at-commonName" },
 	{ 4, { 2, 5, 4, 5 }, "id-at-serialNumber" },
@@ -318,6 +343,12 @@ OID oid_database[] = {
 	{ 5, { 2, 5, 29, 32, 0 }, "id-ce-anyPolicy" },
 	{ 4, { 2, 5, 29, 35 }, "id-ce-authorityKeyIdentifier" },
 	{ 4, { 2, 5, 29, 37 }, "id-ce-extKeyUsage" },
+
+	/* RFC 3565 */
+	{},
+	{ 9, { 2, 16, 840, 1, 101, 3, 4, 1, 2 }, "id-aes128-CBC" },
+	{ 9, { 2, 16, 840, 1, 101, 3, 4, 1, 22 }, "id-aes192-CBC" },
+	{ 9, { 2, 16, 840, 1, 101, 3, 4, 1, 42 }, "id-aes256-CBC" },
 
 	/* RFC 8017 PKCS #1*/
 	{ 9, { 2, 16, 840, 1, 101, 3, 4, 2, 1 }, "id_sha256" },
@@ -452,6 +483,17 @@ int asn1_print_object_identifier(FILE *fp)
 	}
 
 	return oid_type;
+}
+
+int asn1_get_integer(FILE *fp)
+{
+	asn1_find_tag(fp, ASN1_TAG_INTEGER);
+	int length = asn1_get_length(fp);
+	int value = 0;
+	for (int i = 0; i < length; i++) {
+		value = (value << 8) | getc(fp);
+	}
+	return value;
 }
 
 int is_eoc_next(FILE *fp)
@@ -663,7 +705,6 @@ int print_octet_string(FILE *fp, int length)
 		if ((i + 1) % 16 == 0)
 			printf("\n");
 	}
-	printf("\n");
 
 	return 1;
 }
@@ -702,11 +743,16 @@ void print_bit_string(FILE *fp, int length)
 int process_id_data(FILE *fp)
 {
 	asn1_find_tag(fp, ASN1_TAG_OCTET_STRING);
-	asn1_get_length(fp); /* Assume indefinite form . */
-
-	asn1_find_tag(fp, ASN1_TAG_OCTET_STRING);
 	int length = asn1_get_length(fp);
+
+	if (length == ASN1_INDEFINITE_LENGTH) { /* Indefinite form */
+
+		asn1_find_tag(fp, ASN1_TAG_OCTET_STRING);
+		length = asn1_get_length(fp);
+	}
 	print_octet_string(fp, length);
+
+	printf("\n");
 
 	if (is_eoc_next(fp)) /* Indefinite form */
 		return 1;
@@ -2120,6 +2166,62 @@ int process_cms_algorithm_protection(FILE *fp)
 	return 1;
 }
 
+int process_smime_capabililty(FILE *fp)
+{
+	/* SMIMECapability ::= SEQUENCE {
+	 *	capabilityID OBJECT IDENTIFIER,
+	 *	parameters ANY DEFINED BY capabilityID OPTIONAL
+	 * }
+	 */
+	asn1_find_tag(fp, ASN1_TAG_SEQUENCE);
+	int length = asn1_get_length(fp);
+	int offset1, offset2 = 0;
+	offset1 = ftell(fp);
+
+	int oid_type = asn1_print_object_identifier(fp);
+
+	offset2 = ftell(fp);
+	length -= offset2 - offset1;
+
+	/* parameters is optional */
+	if (length > 0) {
+		printf(": ");
+
+		switch (oid_type) {
+		case OID_TYPE_RC2_CBC:
+			int d = asn1_get_integer(fp);
+			printf("%d", d);
+			break;
+		default:
+			print_octet_string(fp, length);
+			break;
+		}
+	}
+
+	printf("\n");
+
+	return 1;
+}
+
+int process_smime_capabilities(FILE *fp)
+{
+	/* SMIMECapabilities ::= SEQUENCE OF SMIMECapability */
+	asn1_find_tag(fp, ASN1_TAG_SEQUENCE);
+	int length = asn1_get_length(fp);
+
+	int offset1, offset2 = 0;
+	while (length) {
+		offset1 = ftell(fp);
+
+		process_smime_capabililty(fp);
+
+		offset2 = ftell(fp);
+		length -= offset2 - offset1;
+	}
+
+	return 1;
+}
+
 int process_signed_attribute(FILE *fp)
 {
 	/* Attribute ::= SEQUENCE {
@@ -2181,6 +2283,10 @@ int process_signed_attribute(FILE *fp)
 			 */
 			asn1_find_tag(fp, ASN1_TAG_UTF8_STRING);
 			print_utf8_string(fp, asn1_get_length(fp));
+			break;
+		case OID_TYPE_SMIME_CAPABILITIES:
+			/* SMIMECapabilities ::= SEQUENCE OF SMIMECapability */
+			process_smime_capabilities(fp);
 			break;
 
 		default:
