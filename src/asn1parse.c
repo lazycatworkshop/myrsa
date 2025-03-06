@@ -462,6 +462,13 @@ enum OID_TYPE {
 	OID_TYPE_UNSTRUCTURED_NAME,
 	OID_TYPE_CHALLENGE_PASSWORD,
 
+	/* RFC 6211 */
+	OID_TYPE_CMS_ALGORITHM_PROTECTION,
+
+	/* RFC 8018 */
+	OID_TYPE_RC2_CBC,
+	OID_TYPE_DES_EDE3_CBC,
+
 	/* Apple Security */
 	OID_TYPE_APPLE_SECURITY_86,
 
@@ -471,7 +478,7 @@ enum OID_TYPE {
 	OID_TYPE_JURISDICTION_OF_INCORPORATION_COUNTRY_NAME,
 
 	OID_TYPE_SHA256_WITH_RSA_ENCRYPTION,
-	OID_TYPE_EMBEDDED_SCTS, /* RFC 6962, v1 */
+	OID_TYPE_EMBEDDED_SCTS,
 
 	/* RFC 5280 (X.509 2008)*/
 	OID_TYPE_AUTHORITY_INFO_ACCESS,
@@ -481,6 +488,9 @@ enum OID_TYPE {
 	OID_TYPE_CLIENT_AUTH,
 	OID_TYPE_OCSP,
 	OID_TYPE_CA_ISSUERS,
+
+	/* RFC 8018 */
+	OID_TYPE_DES_CBC,
 
 	/* X.520 */
 	OID_TYPE_COMMON_NAME,
@@ -503,6 +513,11 @@ enum OID_TYPE {
 	OID_TYPE_ANY_POLICY,
 	OID_TYPE_AUTHORITY_KEY_IDENTIFIER,
 	OID_TYPE_EXT_KEY_USAGE,
+
+	/* RFC 3565 */
+	OID_TYPE_AES128_CBC,
+	OID_TYPE_AES192_CBC,
+	OID_TYPE_AES256_CBC,
 
 	/* RFC 8017 PKCS #1*/
 	OID_TYPE_SHA256,
@@ -533,7 +548,7 @@ OID oid_database[] = {
 	{ 7, { 1, 2, 840, 113549, 1, 1, 5 }, "sha1WithRSAEncryption" },
 	{ 9,
 	  { 1, 2, 840, 113549, 1, 9, 16, 2, 4 },
-	  "id-aa-contentHint" }, /* RFC */
+	  "id-aa-contentHint" }, /* RFC 2634 */
 
 	/* RFC 5652 CMS/PKCS #7 */
 	{ 7, { 1, 2, 840, 113549, 1, 7, 1 }, "id_data" },
@@ -551,6 +566,13 @@ OID oid_database[] = {
 	{ 7, { 1, 2, 840, 113549, 1, 9, 1 }, "pkcs-9-ub-emailAddress" },
 	{ 7, { 1, 2, 840, 113549, 1, 9, 2 }, "pkcs-9-ub-unstructuredName" },
 	{ 7, { 1, 2, 840, 113549, 1, 9, 7 }, "pkcs-9-at-challengePassword" },
+
+	/* RFC 6211 */
+	{ 7, { 1, 2, 840, 113549, 1, 9, 52 }, "id-aa-CMSAlgorithmProtection" },
+
+	/* RFC 8018 */
+	{ 6, { 1, 2, 840, 113549, 3, 2 }, "rc2CBC" },
+	{ 6, { 1, 2, 840, 113549, 3, 7 }, "des-EDE3-CBC" },
 
 	/* Apple Security */
 	{ 7, { 1, 2, 840, 113635, 100, 6, 86 }, "appleSecurity(6)?(86)" },
@@ -571,7 +593,7 @@ OID oid_database[] = {
 	  "sha256WithRSAEncryption" }, /* RFC 4055 */
 	{ 10,
 	  { 1, 3, 6, 1, 4, 1, 11129, 2, 4, 2 },
-	  "embedded-scts" }, /* RFC 6962, v1 */
+	  "embedded-scts" }, /* RFC 6962 */
 
 	/* RFC 5280 (X.509 2008)*/
 	{ 9, { 1, 3, 6, 1, 5, 5, 7, 1, 1 }, "id-pe-authorityInfoAccess" },
@@ -581,6 +603,9 @@ OID oid_database[] = {
 	{ 9, { 1, 3, 6, 1, 5, 5, 7, 3, 2 }, "id-kp-clientAuth " },
 	{ 9, { 1, 3, 6, 1, 5, 5, 7, 48, 1 }, "id-ad-ocsp" },
 	{ 9, { 1, 3, 6, 1, 5, 5, 7, 48, 2 }, "id-ad-caIssuers" },
+
+	/* RFC 8018 */
+	{ 6, { 1, 3, 14, 3, 2, 7 }, "desCBC" },
 
 	/* X.520 */
 	{ 4, { 2, 5, 4, 3 }, "id-at-commonName" },
@@ -603,6 +628,12 @@ OID oid_database[] = {
 	{ 5, { 2, 5, 29, 32, 0 }, "id-ce-anyPolicy" },
 	{ 4, { 2, 5, 29, 35 }, "id-ce-authorityKeyIdentifier" },
 	{ 4, { 2, 5, 29, 37 }, "id-ce-extKeyUsage" },
+
+	/* RFC 3565 */
+	{},
+	{ 9, { 2, 16, 840, 1, 101, 3, 4, 1, 2 }, "id-aes128-CBC" },
+	{ 9, { 2, 16, 840, 1, 101, 3, 4, 1, 22 }, "id-aes192-CBC" },
+	{ 9, { 2, 16, 840, 1, 101, 3, 4, 1, 42 }, "id-aes256-CBC" },
 
 	/* RFC 8017 PKCS #1*/
 	{ 9, { 2, 16, 840, 1, 101, 3, 4, 2, 1 }, "id_sha256" },
