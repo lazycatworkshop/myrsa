@@ -1,6 +1,6 @@
 # myrsa Project
 
-This project implements RSA public-key cryptography in C. It includes utilities for generating RSA keys, signing messages, and verifying message signatures. This implementation serves as an educational tool for understanding the basics of RSA cryptography and its application in secure communication.
+This project implements RSA public-key cryptography in C. It includes utilities for generating RSA keys, signing messages, and verifying message signatures. This implementation serves as an educational tool for understanding the basics of RSA cryptography and its applications in secure communication.
 
 ## Getting Started
 
@@ -65,6 +65,7 @@ The `doc` directory contains the following documentation files in Markdown:
 - **`how_rsa_works.md`**: A deeper exploration of the RSA algorithm.
 - **`public_key_certificate.md`**: A look into X.509 certificates.
 - **`code_signing_self_signed_cert.md`**: A demonstration of code signing using a self-signed certificate stored in a YubiKey token.
+- **`PKCS#7.md`**: A tutorial of document signing with Cryptographic Message Syntax specification.
 
 ## Development environment
 - Raspberry Pi 4B, 4GB memory

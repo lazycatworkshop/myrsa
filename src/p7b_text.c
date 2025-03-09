@@ -1,9 +1,9 @@
-/** x509_text_public_key.c - This program takes in a public key certificate in DER
- *  format and displays its content in text.
+/** p7b_text.c - A program to display the content of .p7b file in text.
  * 
- *  It assumes the certificate is valid in X.509 format.
+ *  Usage : p7bview -f <filename>
+ * 
+ * Note: This program is a work on progress and does only minimal checks.
  */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -57,7 +57,8 @@ enum ASN1_TAG {
 
 int asn1_find_tag(FILE *fp, uint8_t tag);
 int asn1_get_length(FILE *fp);
-int process_x509_cert(FILE *fp);
+int get_content_type(FILE *fp);
+int process_content(FILE *fp, int oid);
 
 int main(int argc, char *argv[])
 {
@@ -71,8 +72,8 @@ int main(int argc, char *argv[])
 			fp = fopen(optarg, "rb");
 			if (fp == NULL) {
 				fprintf(stderr,
-					"Error: Unable to open file: %s\n",
-					strerror(errno));
+					"Error: Failed to open file '%s' - %s\n",
+					optarg, strerror(errno));
 				ret = EXIT_FAILURE;
 				goto out;
 			}
@@ -90,20 +91,28 @@ int main(int argc, char *argv[])
 		goto out;
 	}
 
-	/* version check */
-	if ((getc(fp) & ASN1_TAG_MASK) != ASN1_TAG_SEQUENCE) {
-		fprintf(stderr, "Error: Not a valid X.509 certificate\n");
+	c = getc(fp);
+	if (c == '-') { /* Encapsulate Boundary in PEM */
+		fprintf(stderr, "Error: File is in PEM format\n");
 		ret = EXIT_FAILURE;
 		goto out;
 	}
-	rewind(fp);
+	fseek(fp, 0, SEEK_SET);
 
-	if (!process_x509_cert(fp)) {
-		fprintf(stderr, "Error: Failed to process X.509 certificate\n");
+	/* Top level: ContentInfo */
+	if (asn1_find_tag(fp, ASN1_TAG_SEQUENCE) < 0) {
+		fprintf(stderr, "Error: Failed to find the first SEQUENCE.\n");
 		ret = EXIT_FAILURE;
+		goto out;
 	}
+	asn1_get_length(fp);
 
-	ret = EXIT_SUCCESS;
+	int oid = get_content_type(fp);
+	if (!process_content(fp, oid)) {
+		fprintf(stderr, "Error: Not a valid PKCS #7 file\n\n");
+		ret = EXIT_FAILURE;
+		goto out;
+	}
 
 out:
 	if (fp)
@@ -161,10 +170,19 @@ enum OID_TYPE {
 	OID_TYPE_ID_SIGNING_TIME,
 	OID_TYPE_ID_COUNTER_SIGNATURE,
 
+	OID_TYPE_SMIME_CAPABILITIES, /* RFC 8551*/
+
 	/* PKCS #9 */
 	OID_TYPE_EMAIL_ADDRESS,
 	OID_TYPE_UNSTRUCTURED_NAME,
 	OID_TYPE_CHALLENGE_PASSWORD,
+
+	/* RFC 6211 */
+	OID_TYPE_CMS_ALGORITHM_PROTECTION,
+
+	/* RFC 8018 */
+	OID_TYPE_RC2_CBC,
+	OID_TYPE_DES_EDE3_CBC,
 
 	/* Apple Security */
 	OID_TYPE_APPLE_SECURITY_86,
@@ -175,7 +193,7 @@ enum OID_TYPE {
 	OID_TYPE_JURISDICTION_OF_INCORPORATION_COUNTRY_NAME,
 
 	OID_TYPE_SHA256_WITH_RSA_ENCRYPTION,
-	OID_TYPE_EMBEDDED_SCTS, /* RFC 6962, v1 */
+	OID_TYPE_EMBEDDED_SCTS,
 
 	/* RFC 5280 (X.509 2008)*/
 	OID_TYPE_AUTHORITY_INFO_ACCESS,
@@ -185,6 +203,9 @@ enum OID_TYPE {
 	OID_TYPE_CLIENT_AUTH,
 	OID_TYPE_OCSP,
 	OID_TYPE_CA_ISSUERS,
+
+	/* RFC 8018 */
+	OID_TYPE_DES_CBC,
 
 	/* X.520 */
 	OID_TYPE_COMMON_NAME,
@@ -207,6 +228,11 @@ enum OID_TYPE {
 	OID_TYPE_ANY_POLICY,
 	OID_TYPE_AUTHORITY_KEY_IDENTIFIER,
 	OID_TYPE_EXT_KEY_USAGE,
+
+	/* RFC 3565 */
+	OID_TYPE_AES128_CBC,
+	OID_TYPE_AES192_CBC,
+	OID_TYPE_AES256_CBC,
 
 	/* RFC 8017 PKCS #1*/
 	OID_TYPE_SHA256,
@@ -237,20 +263,31 @@ OID oid_database[] = {
 	{ 7, { 1, 2, 840, 113549, 1, 1, 5 }, "sha1WithRSAEncryption" },
 	{ 9,
 	  { 1, 2, 840, 113549, 1, 9, 16, 2, 4 },
-	  "id-aa-contentHint" }, /* RFC */
+	  "id-aa-contentHint" }, /* RFC 2634 */
 
 	/* RFC 5652 CMS/PKCS #7 */
 	{ 7, { 1, 2, 840, 113549, 1, 7, 1 }, "id_data" },
-	{ 7, { 1, 2, 840, 113549, 1, 7, 2 }, "id_signeData" },
+	{ 7, { 1, 2, 840, 113549, 1, 7, 2 }, "id_signedData" },
 	{ 7, { 1, 2, 840, 113549, 1, 9, 3 }, "id_contentType" },
 	{ 7, { 1, 2, 840, 113549, 1, 9, 4 }, "id_messageDigest" },
 	{ 7, { 1, 2, 840, 113549, 1, 9, 5 }, "id_signingTime" },
 	{ 7, { 1, 2, 840, 113549, 1, 9, 6 }, "id_counterSignature" },
 
+	{ 7,
+	  { 1, 2, 840, 113549, 1, 9, 15 },
+	  "smimeCapabilities" }, /* RFC 8551 */
+
 	/* PKCS #9 */
 	{ 7, { 1, 2, 840, 113549, 1, 9, 1 }, "pkcs-9-ub-emailAddress" },
 	{ 7, { 1, 2, 840, 113549, 1, 9, 2 }, "pkcs-9-ub-unstructuredName" },
 	{ 7, { 1, 2, 840, 113549, 1, 9, 7 }, "pkcs-9-at-challengePassword" },
+
+	/* RFC 6211 */
+	{ 7, { 1, 2, 840, 113549, 1, 9, 52 }, "id-aa-CMSAlgorithmProtection" },
+
+	/* RFC 8018 */
+	{ 6, { 1, 2, 840, 113549, 3, 2 }, "rc2CBC" },
+	{ 6, { 1, 2, 840, 113549, 3, 7 }, "des-EDE3-CBC" },
 
 	/* Apple Security */
 	{ 7, { 1, 2, 840, 113635, 100, 6, 86 }, "appleSecurity(6)?(86)" },
@@ -271,7 +308,7 @@ OID oid_database[] = {
 	  "sha256WithRSAEncryption" }, /* RFC 4055 */
 	{ 10,
 	  { 1, 3, 6, 1, 4, 1, 11129, 2, 4, 2 },
-	  "embedded-scts" }, /* RFC 6962, v1 */
+	  "embedded-scts" }, /* RFC 6962 */
 
 	/* RFC 5280 (X.509 2008)*/
 	{ 9, { 1, 3, 6, 1, 5, 5, 7, 1, 1 }, "id-pe-authorityInfoAccess" },
@@ -281,6 +318,9 @@ OID oid_database[] = {
 	{ 9, { 1, 3, 6, 1, 5, 5, 7, 3, 2 }, "id-kp-clientAuth " },
 	{ 9, { 1, 3, 6, 1, 5, 5, 7, 48, 1 }, "id-ad-ocsp" },
 	{ 9, { 1, 3, 6, 1, 5, 5, 7, 48, 2 }, "id-ad-caIssuers" },
+
+	/* RFC 8018 */
+	{ 6, { 1, 3, 14, 3, 2, 7 }, "desCBC" },
 
 	/* X.520 */
 	{ 4, { 2, 5, 4, 3 }, "id-at-commonName" },
@@ -303,6 +343,12 @@ OID oid_database[] = {
 	{ 5, { 2, 5, 29, 32, 0 }, "id-ce-anyPolicy" },
 	{ 4, { 2, 5, 29, 35 }, "id-ce-authorityKeyIdentifier" },
 	{ 4, { 2, 5, 29, 37 }, "id-ce-extKeyUsage" },
+
+	/* RFC 3565 */
+	{},
+	{ 9, { 2, 16, 840, 1, 101, 3, 4, 1, 2 }, "id-aes128-CBC" },
+	{ 9, { 2, 16, 840, 1, 101, 3, 4, 1, 22 }, "id-aes192-CBC" },
+	{ 9, { 2, 16, 840, 1, 101, 3, 4, 1, 42 }, "id-aes256-CBC" },
 
 	/* RFC 8017 PKCS #1*/
 	{ 9, { 2, 16, 840, 1, 101, 3, 4, 2, 1 }, "id_sha256" },
@@ -439,6 +485,218 @@ int asn1_print_object_identifier(FILE *fp)
 	return oid_type;
 }
 
+int asn1_get_integer(FILE *fp)
+{
+	asn1_find_tag(fp, ASN1_TAG_INTEGER);
+	int length = asn1_get_length(fp);
+	int value = 0;
+	for (int i = 0; i < length; i++) {
+		value = (value << 8) | getc(fp);
+	}
+	return value;
+}
+
+int is_eoc_next(FILE *fp)
+{
+	int c = getc(fp);
+	if (c == ASN1_TAG_EOC) {
+		asn1_get_length(fp);
+		return 1;
+	}
+	ungetc(c, fp);
+	return 0;
+}
+
+int get_content_type(FILE *fp)
+{
+	/* ContentType ::= OBJECT IDENTIFIER */
+	printf("Content Type: ");
+	int oid_type = asn1_print_object_identifier(fp);
+	printf("\n");
+
+	return oid_type;
+}
+
+int process_signed_data(FILE *fp);
+int process_id_data(FILE *fp);
+
+int process_content(FILE *fp, int oid)
+{
+	int ret = 0;
+	switch (oid) {
+	case OID_TYPE_ID_SIGNED_DATA:
+		ret = process_signed_data(fp);
+		break;
+	case OID_TYPE_ID_DATA:
+		ret = process_id_data(fp);
+		break;
+	default:
+		ret = 0;
+	}
+
+	return ret;
+}
+
+int process_digest_algorithms(FILE *fp);
+int process_encapsulated_content_info(FILE *fp);
+int process_certificates(FILE *fp);
+int process_signer_infos(FILE *fp);
+int process_signed_data(FILE *fp)
+{
+	printf("Signed Data\n");
+
+	/* For structures of indefinite form, if thye are consisting of only
+	 * simple structures, just remove EOC when we reach it.
+	 */
+	asn1_find_tag(fp, ASN1_TAG_CONTEXT_SPECIFIC_0);
+	asn1_get_length(fp); /* Assume indefinite form #1. */
+
+	asn1_find_tag(fp, ASN1_TAG_SEQUENCE); /* Assume indefinite form #2. */
+	asn1_get_length(fp);
+
+	asn1_find_tag(fp, ASN1_TAG_INTEGER);
+	asn1_get_length(fp);
+	int version = getc(fp);
+	printf("  Version: v%1d\n", version); /* 0=v1 */
+
+	process_digest_algorithms(fp);
+
+	process_encapsulated_content_info(fp);
+
+	/* certificates field is optional */
+	process_certificates(fp);
+
+	process_signer_infos(fp);
+
+	if (is_eoc_next(fp)) /* Indefinite form #2 */
+		return 1;
+
+	if (is_eoc_next(fp)) /* Indefinite form #1 */
+		return 1;
+
+	return 1;
+}
+
+int process_algorithm_identifier(FILE *fp)
+{
+	/* AlgorithmIdentifier ::= SEQUENCE {
+	 *    algorithm OBJECT IDENTIFIER,
+	 *    parameters ANY DEFINED BY algorithm OPTIONAL
+	 * }
+	 */
+	asn1_find_tag(fp, ASN1_TAG_SEQUENCE);
+	int length = asn1_get_length(fp);
+	int offset1, offset2 = 0;
+	offset1 = ftell(fp);
+
+	asn1_print_object_identifier(fp);
+
+	offset2 = ftell(fp);
+	length -= offset2 - offset1;
+
+	/* Parameter field is optional */
+	if (length) {
+		int c = getc(fp);
+		if ((c & ASN1_TAG_MASK) == ASN1_TAG_NULL) {
+			asn1_get_length(fp); /* Just read the length */
+			printf("\n");
+		} else
+			return 0; /* Not supprted yet */
+	}
+
+	return 1;
+}
+
+int process_digest_algorithms(FILE *fp)
+{
+	/* DigestAlgorithmIdentifiers ::= SET OF DigestAlgorithmIdentifier */
+	asn1_find_tag(fp, ASN1_TAG_SET);
+	int length = asn1_get_length(fp);
+	printf("  Digest Algorithms: ");
+
+	if (!length) { /* Certificate-only PKCS#7 structure */
+		printf("Empty\n");
+		return 1;
+	}
+
+	/* DigestAlgorithmIdentifier ::= AlgorithmIdentifier */
+	int offset1, offset2 = 0;
+	while (length) { /* Nnumbere of algorithms */
+		offset1 = ftell(fp);
+		process_algorithm_identifier(fp);
+		offset2 = ftell(fp);
+		length -= offset2 - offset1;
+
+		if (is_eoc_next(fp)) /* Indefinite form */
+			length = 0;
+
+		if (length)
+			printf(", ");
+	}
+
+	printf("\n");
+
+	return 1;
+}
+
+int process_e_content_type(FILE *fp)
+{
+	/* ContentType ::= OBJECT IDENTIFIER */
+	printf("    eContent Type: ");
+
+	int oid_type = asn1_print_object_identifier(fp);
+	printf("\n");
+
+	return oid_type;
+}
+
+int process_encapsulated_content_info(FILE *fp)
+{
+	/* EncapsulatedContentInfo ::= SEQUENCE {
+		eContentType ContentType,
+		eContent [0] EXPLICIT OCTET STRING OPTIONAL }
+	 */
+	printf("  encapsulatedContentInfo:\n");
+
+	asn1_find_tag(fp, ASN1_TAG_SEQUENCE);
+	int length = asn1_get_length(fp); /* Assume indefinite form #1*/
+	int offset1, offset2 = 0;
+	offset1 = ftell(fp);
+
+	int oid = process_e_content_type(fp);
+
+	offset2 = ftell(fp);
+	length -= offset2 - offset1;
+
+	if (!length) /* eContent is optional */
+		return 1;
+
+	int c = getc(fp);
+	if ((c & ASN1_TAG_MASK) == ASN1_TAG_CONTEXT_SPECIFIC_0) { /* Optional */
+		printf("    eContent:\n");
+
+		asn1_get_length(fp); /* Assume indefinite form #2 */
+
+		if (!process_content(fp, oid)) {
+			fprintf(stderr,
+				"Error: Not a valid PKCS #7 content type!\n\n");
+			return 0;
+		}
+
+		if (is_eoc_next(fp)) {
+		} /* Indefinite form #2 */
+
+	} else { /* Put back the read-ahead. */
+		ungetc(c, fp);
+		return 1;
+	}
+
+	if (is_eoc_next(fp)) /* Indefinite form #1 */
+		return 1;
+
+	return 1; /* Fixed form */
+}
+
 int print_octet_string(FILE *fp, int length)
 {
 	for (int i = 0; i < length; i++) {
@@ -447,7 +705,6 @@ int print_octet_string(FILE *fp, int length)
 		if ((i + 1) % 16 == 0)
 			printf("\n");
 	}
-	printf("\n");
 
 	return 1;
 }
@@ -481,6 +738,42 @@ void print_bit_string(FILE *fp, int length)
 	int unused_bits = getc(fp);
 	printf("unused bits: %d\n", unused_bits);
 	print_octet_string(fp, length - 1);
+}
+
+int process_id_data(FILE *fp)
+{
+	asn1_find_tag(fp, ASN1_TAG_OCTET_STRING);
+	int length = asn1_get_length(fp);
+
+	if (length == ASN1_INDEFINITE_LENGTH) { /* Indefinite form */
+
+		asn1_find_tag(fp, ASN1_TAG_OCTET_STRING);
+		length = asn1_get_length(fp);
+	}
+	print_octet_string(fp, length);
+
+	printf("\n");
+
+	if (is_eoc_next(fp)) /* Indefinite form */
+		return 1;
+
+	return 1;
+}
+
+int process_x509_cert(FILE *fp);
+int process_certificates(FILE *fp)
+{
+	/* certificates [0] IMPLICIT CertificateSet OPTIONAL */
+	int c = getc(fp);
+	if ((c & ASN1_TAG_MASK) == ASN1_TAG_CONTEXT_SPECIFIC_0) {
+		asn1_get_length(fp); /* Assume indefinite form */
+		process_x509_cert(fp);
+		if (is_eoc_next(fp)) /* Indefinite form */
+			return 1;
+	} else
+		ungetc(c, fp);
+
+	return 1;
 }
 
 enum X509_VERSION { X509_VERSION_V1 = 0, X509_VERSION_V2, X509_VERSION_V3 };
@@ -606,7 +899,6 @@ int x509_process_algorithm_idenfifier(FILE *fp)
 		int c = getc(fp);
 		if ((c & ASN1_TAG_MASK) == ASN1_TAG_NULL) {
 			asn1_get_length(fp); /* Just read the length */
-			printf("\n");
 		} else
 			return 0; /* Not supprted yet */
 	}
@@ -797,6 +1089,36 @@ void print_generalized_time(char *generalized_time)
 	print_time(day, month, year, hour, minute, second);
 }
 
+int asn1_print_utc_time(FILE *fp)
+{
+	/* UTCTime ::= YYMMDDHHMMSSZ */
+	asn1_find_tag(fp, ASN1_TAG_UTC);
+	int length = asn1_get_length(fp);
+	char time_str[16];
+	for (int i = 0; i < length; i++) {
+		time_str[i] = getc(fp);
+	}
+
+	print_utc_time(time_str);
+
+	return 1;
+}
+
+int asn1_print_generalized_time(FILE *fp)
+{
+	/* GeneralizedTime ::= YYYYMMDDHHMMSSZ */
+	asn1_find_tag(fp, ASN1_TAG_GENERALIZED_TIME);
+	int length = asn1_get_length(fp);
+	char time_str[16];
+	for (int i = 0; i < length; i++) {
+		time_str[i] = getc(fp);
+	}
+
+	print_generalized_time(time_str);
+
+	return 1;
+}
+
 int x509_process_validity(FILE *fp)
 {
 	/* Validity ::= SEQUENCE {
@@ -981,8 +1303,7 @@ int x509_process_general_names(FILE *fp)
 	while (length) {
 		offset1 = ftell(fp);
 
-		if (!x509_process_general_name(fp))
-			return 0;
+		x509_process_general_name(fp);
 
 		offset2 = ftell(fp);
 		length -= offset2 - offset1;
@@ -1705,6 +2026,383 @@ int x509_process_signature(FILE *fp)
 	int length = asn1_get_length(fp);
 	print_bit_string(fp, length);
 	printf("\n");
+
+	return 1;
+}
+
+int print_serial_number(FILE *fp)
+{
+	/* CertificateSerialNumber ::= INTEGER */
+	asn1_find_tag(fp, ASN1_TAG_INTEGER);
+	int length = asn1_get_length(fp);
+	for (int i = 0; i < length; i++) {
+		printf("%02x", getc(fp));
+	}
+
+	return 1;
+}
+
+int process_issuer_and_serial_number(FILE *fp)
+{
+	/* IssuerAndSerialNumber ::= SEQUENCE {
+	 *    issuer Name,
+	 *    serialNumber CertificateSerialNumber
+	 * }
+	 */
+	//asn1_find_tag(fp, ASN1_TAG_SEQUENCE);
+	//asn1_get_length(fp);
+
+	printf("    issuer: ");
+	x501_process_name(fp);
+
+	printf("\n");
+
+	/* CertificateSerialNumber ::= INTEGER */
+	printf("    serialNumber: ");
+	print_serial_number(fp);
+	printf("\n");
+
+	return 1;
+}
+
+int process_signer_identifier(FILE *fp)
+{
+	/* SignerIdentifier ::= CHOICE {
+	 *    issuerAndSerialNumber IssuerAndSerialNumber,
+	 *    subjectKeyIdentifier [0] SubjectKeyIdentifier
+	 * }
+	 */
+	int c = getc(fp);
+	int tag = c & ASN1_TAG_MASK;
+	asn1_get_length(fp);
+	switch (tag) {
+	case ASN1_TAG_CONTEXT_SPECIFIC_0:
+		/* SubjectKeyIdentifier ::= KeyIdentifier */
+		/* KeyIdentifier ::= OCTET STRING */
+		asn1_find_tag(fp, ASN1_TAG_OCTET_STRING);
+		int length = asn1_get_length(fp);
+		print_octet_string(fp, length);
+		break;
+	case ASN1_TAG_SEQUENCE:
+		process_issuer_and_serial_number(fp);
+		break;
+	default:
+		fprintf(stderr, "Error: Not a valid SignerIdentifier\n");
+		return 0;
+		break;
+	}
+
+	return 1;
+}
+
+int print_object_identifier(FILE *fp, int length)
+{
+	uint8_t asn1_oid_value[128];
+	uint32_t oid_len = 0;
+	asn1_get_oid(fp, length, asn1_oid_value, &oid_len);
+
+	uint32_t oid_value[128];
+	decode_asn1_oid(asn1_oid_value, oid_len, oid_value, &oid_len);
+	int oid_type = asn1_lookup_oid(oid_value, oid_len);
+
+	if (oid_type != OID_TYPE_UNKNOWN) {
+		print_oid_desc(oid_type);
+	} else {
+		print_oid(oid_value, oid_len);
+	}
+
+	return oid_type;
+}
+
+int process_cms_algorithm_protection(FILE *fp)
+{
+	/* CMSAlgorithmProtection ::= SEQUENCE {
+	 *	digestAlgorithm DigestAlgorithmIdentifier,
+	 *	signatureAlgorithm [1] SignatureAlgorithmIdentifier OPTIONAL,
+	 *	macAlgorithm [2] MessageAuthenticationCodeAlgorithm
+	 *	OPTIONAL
+	 */
+	asn1_find_tag(fp, ASN1_TAG_SEQUENCE);
+	asn1_get_length(fp);
+
+	printf("digestAlgorithm: ");
+	x509_process_algorithm_idenfifier(fp);
+
+	int c = getc(fp);
+	if ((c & ASN1_TAG_MASK) == ASN1_TAG_CONTEXT_SPECIFIC_1) {
+		int length = asn1_get_length(fp);
+		int offset1, offset2 = 0;
+		offset1 = ftell(fp);
+		/* SignatureAlgorithmIdentifier ::= AlgorithmIdentifier */
+		printf("signatureAlgorithm: ");
+#if 0
+		/* Somehow my test samples does not have the SEQUENCE */
+		x509_process_algorithm_idenfifier(fp);
+#else
+		asn1_find_tag(fp, ASN1_TAG_OBJECT_IDENTIFIER);
+		int l = asn1_get_length(fp);
+		print_object_identifier(fp, l);
+
+		offset2 = ftell(fp);
+		length -= offset2 - offset1;
+		/* Parameter is optional */
+		if (length) {
+			/* Assume NULL */
+			c = getc(fp);
+			if ((c & ASN1_TAG_MASK) == ASN1_TAG_NULL) {
+				asn1_get_length(fp);
+				/* No printout */
+			} else
+				return 0; /*  Not supported yet */
+		}
+#endif
+
+	} else if ((c & ASN1_TAG_MASK) == ASN1_TAG_CONTEXT_SPECIFIC_2) {
+		printf("      macAlgorithm: ");
+		x509_process_algorithm_idenfifier(fp);
+	} else
+		ungetc(c, fp);
+
+	return 1;
+}
+
+int process_smime_capabililty(FILE *fp)
+{
+	/* SMIMECapability ::= SEQUENCE {
+	 *	capabilityID OBJECT IDENTIFIER,
+	 *	parameters ANY DEFINED BY capabilityID OPTIONAL
+	 * }
+	 */
+	asn1_find_tag(fp, ASN1_TAG_SEQUENCE);
+	int length = asn1_get_length(fp);
+	int offset1, offset2 = 0;
+	offset1 = ftell(fp);
+
+	int oid_type = asn1_print_object_identifier(fp);
+
+	offset2 = ftell(fp);
+	length -= offset2 - offset1;
+
+	/* parameters is optional */
+	if (length > 0) {
+		printf(": ");
+
+		switch (oid_type) {
+		case OID_TYPE_RC2_CBC:
+			int d = asn1_get_integer(fp);
+			printf("%d", d);
+			break;
+		default:
+			print_octet_string(fp, length);
+			break;
+		}
+	}
+
+	printf("\n");
+
+	return 1;
+}
+
+int process_smime_capabilities(FILE *fp)
+{
+	/* SMIMECapabilities ::= SEQUENCE OF SMIMECapability */
+	asn1_find_tag(fp, ASN1_TAG_SEQUENCE);
+	int length = asn1_get_length(fp);
+
+	int offset1, offset2 = 0;
+	while (length) {
+		offset1 = ftell(fp);
+
+		process_smime_capabililty(fp);
+
+		offset2 = ftell(fp);
+		length -= offset2 - offset1;
+	}
+
+	return 1;
+}
+
+int process_signed_attribute(FILE *fp)
+{
+	/* Attribute ::= SEQUENCE {
+	 *	attrType OBJECT IDENTIFIER,
+	 * 	attrValues SET OF AttributeValue }
+	 *
+	 * 	AttributeValue ::= ANY
+	 */
+	asn1_find_tag(fp, ASN1_TAG_SEQUENCE);
+	asn1_get_length(fp);
+
+	printf("    type: ");
+	int oid_type = asn1_print_object_identifier(fp);
+
+	printf("\n");
+
+	printf("    values:\n");
+	asn1_find_tag(fp, ASN1_TAG_SET);
+	int length = asn1_get_length(fp);
+	int offset1, offset2 = 0;
+	while (length) {
+		offset1 = ftell(fp);
+
+		switch (oid_type) {
+		case OID_TYPE_ID_CONTENT_TYPE:
+			asn1_print_object_identifier(fp);
+			break;
+		case OID_TYPE_ID_SIGNING_TIME:
+			int c = getc(fp);
+			if ((c & ASN1_TAG_MASK) == ASN1_TAG_UTC) {
+				ungetc(c, fp);
+				asn1_print_utc_time(fp);
+			} else if ((c & ASN1_TAG_MASK) ==
+				   ASN1_TAG_GENERALIZED_TIME) {
+				ungetc(c, fp);
+				asn1_print_generalized_time(fp);
+			} else
+				printf("TODO: tag %02x\n", c);
+
+			break;
+		case OID_TYPE_CMS_ALGORITHM_PROTECTION:
+			process_cms_algorithm_protection(fp);
+			break;
+		case OID_TYPE_ID_MESSAGE_DIGEST:
+			/* MessageDigest ::= OCTET STRING*/
+			asn1_find_tag(fp, ASN1_TAG_OCTET_STRING);
+			int len = asn1_get_length(fp);
+			print_octet_string(fp, len);
+			break;
+		case OID_TYPE_CONTENT_HINT:
+			/* ContentHints ::= SEQUENCE {
+			 *	contentType ContentType,
+			 *	contentDescription [0] EXPLICIT UTF8String OPTIONAL
+			 * }
+			 * ContentType ::= OBJECT IDENTIFIER
+			 * ContentDescription ::= UTF8String
+			 * 
+			 * My sample shows only UTF8String.
+			 */
+			asn1_find_tag(fp, ASN1_TAG_UTF8_STRING);
+			print_utf8_string(fp, asn1_get_length(fp));
+			break;
+		case OID_TYPE_SMIME_CAPABILITIES:
+			/* SMIMECapabilities ::= SEQUENCE OF SMIMECapability */
+			process_smime_capabilities(fp);
+			break;
+
+		default:
+			print_octet_string(fp, length);
+			break;
+		}
+
+		offset2 = ftell(fp);
+		length -= offset2 - offset1;
+		if (length)
+			printf(", ");
+	}
+
+	printf("\n");
+
+	return 1;
+}
+
+int process_signed_attributes(FILE *fp)
+{
+	/* SignedAttributes ::= SET SIZE (1..MAX) OF Attribute */
+	int length = asn1_get_length(fp);
+	int offset1, offset2 = 0;
+	while (length) {
+		offset1 = ftell(fp);
+
+		process_signed_attribute(fp);
+		printf("\n");
+
+		offset2 = ftell(fp);
+		length -= offset2 - offset1;
+	}
+
+	return 1;
+}
+
+int process_signer_info(FILE *fp)
+{
+	/* SignerInfo ::= SEQUENCE {
+	 *    version CMSVersion,
+	 *    sid SignerIdentifier,
+	 *    digestAlgorithm DigestAlgorithmIdentifier,
+	 *    signedAttrs [0] IMPLICIT SignedAttributes OPTIONAL,
+	 *    signatureAlgorithm SignatureAlgorithmIdentifier,
+	 *    signature SignatureValue,
+	 *    unsignedAttrs [1] IMPLICIT UnsignedAttributes OPTIONAL
+	 * }
+	 */
+	asn1_find_tag(fp, ASN1_TAG_SEQUENCE);
+	asn1_get_length(fp);
+
+	/* CMSVersion ::= INTEGER { v0(0), v1(1), v2(2), v3(3), v4(4), v5(5) } */
+	asn1_find_tag(fp, ASN1_TAG_INTEGER);
+	asn1_get_length(fp);
+	int version = getc(fp);
+	printf("  version: v%1d\n", version);
+
+	/* sid */
+	printf("  sid:\n");
+	process_signer_identifier(fp);
+	printf("\n");
+
+	/* digestAlgorithm */
+	printf("  digestAlgorithm: ");
+	x509_process_algorithm_idenfifier(fp);
+
+	/* signedAttrs: optional */
+	int c = getc(fp);
+	if ((c & ASN1_TAG_MASK) == ASN1_TAG_CONTEXT_SPECIFIC_0) {
+		printf("  signedAttrs:\n");
+		process_signed_attributes(fp);
+
+	} else
+		ungetc(c, fp);
+
+	/* signatureAlgorithm */
+	printf("  signatureAlgorithm: ");
+	x509_process_algorithm_idenfifier(fp);
+
+	printf("  signature:\n");
+	/* SignatureValue ::= OCTET STRING */
+	asn1_find_tag(fp, ASN1_TAG_OCTET_STRING);
+	int length = asn1_get_length(fp);
+	print_octet_string(fp, length);
+
+	c = getc(fp);
+	if ((c & ASN1_TAG_MASK) == ASN1_TAG_CONTEXT_SPECIFIC_1) {
+		/* UnsignedAttributes ::= SET SIZE (1..MAX) OF Attribute */
+		printf("  unsignedAttrs: ");
+		process_signed_attributes(fp);
+	} else
+		ungetc(c, fp);
+
+	return 1;
+}
+
+int process_signer_infos(FILE *fp)
+{
+	printf("SignerInfos:\n");
+
+	/* SignerInfos ::= SET SIZE (1..MAX) OF SignerInfo */
+	asn1_find_tag(fp, ASN1_TAG_SET);
+	int length = asn1_get_length(fp);
+
+	if (!length)
+		printf("Empty\n");
+
+	int offset1, offset2 = 0;
+	while (length) {
+		offset1 = ftell(fp);
+
+		process_signer_info(fp);
+
+		offset2 = ftell(fp);
+		length -= offset2 - offset1;
+	}
 
 	return 1;
 }

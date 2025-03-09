@@ -7,8 +7,6 @@
 #include <getopt.h>
 #include "mySHA.h"
 
-#define MAX_FILE_SIZE (1024 << 7) /* 128 KB */
-
 int is_big_endian(void)
 {
 	union {
@@ -66,16 +64,11 @@ int main(int argc, char *argv[])
 	size_t file_len = ftell(fp);
 	rewind(fp);
 	int ret = EXIT_SUCCESS;
-	if (file_len > MAX_FILE_SIZE) {
-		fprintf(stderr, "Error: file size exceeds the limit\n");
-		ret = EXIT_FAILURE;
-		goto out;
-	}
 
-	char buffer[MAX_FILE_SIZE];
-	size_t len = fread(buffer, 1, MAX_FILE_SIZE, fp);
+	char *buffer = malloc(file_len);
+	size_t len = fread(buffer, 1, file_len, fp);
 	if (len == 0) {
-		perror("Error: failed to read the output file\n");
+		perror("Error: failed to read the input file\n");
 		ret = EXIT_FAILURE;
 		goto out;
 	}
@@ -100,6 +93,9 @@ int main(int argc, char *argv[])
 	}
 
 out:
+	if (buffer)
+		free(buffer);
+
 	if (fp)
 		fclose(fp);
 	if (out_fp)
