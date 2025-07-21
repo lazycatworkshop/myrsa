@@ -12,9 +12,6 @@
 # Compiled executables
 *.out
 *.app
-demo_rsa_keys
-test_myrsa_math
-test_myrsa
 
 # Dependency files
 *.d
