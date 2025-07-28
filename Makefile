@@ -23,7 +23,8 @@ SUBDIRS := common \
 	   ${PROG_DIR}/x509_extract_pubkey \
 	   ${PROG_DIR}/x509_extract_sig \
 	   ${PROG_DIR}/x509_extract_tbs \
-	   ${PROG_DIR}/x509_text_public_key
+	   ${PROG_DIR}/x509_text_public_key \
+	   ${PROG_DIR}/test_oid \
 
 
 
