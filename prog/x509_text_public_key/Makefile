@@ -1,14 +1,15 @@
 CC = gcc
 INC_DIR = ../../include
+COMMON_DIR = ../../common
 BIN_DIR = ../../bin
 CFLAGS = -Wall -I${INC_DIR} -MMD -MP -std=c99
 EXEC = x509_text_public_key
 OBJS = ${EXEC}.o
-COMMON_OBJS =
+COMMON_OBJS = ${COMMON_DIR}/oid.o
 DEPS = ${EXEC}.d
 
 ifdef DEBUG
-CFLAGS += -g
+CFLAGS += -g -DDEBUG
 else
 CFLAGS += -O2 -DNDEBUG
 endif
