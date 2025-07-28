@@ -12,48 +12,9 @@
 #include <time.h>
 #include <errno.h>
 #include <locale.h>
+#include "asn1.h"
 
 #pragma pack(push, 1)
-
-#define ASN1_TAG_MASK 0xdf /* Take out P/C flag */
-#define ASN1_C_P_MASK 0x20
-#define ASN1_IS_CONSTRUCTED(identifier) ((identifier) & ASN1_C_P_MASK)
-
-enum ASN1_TAG {
-	ASN1_TAG_EOC = 0x00,
-	ASN1_TAG_BOOLEAN = 0x01,
-	ASN1_TAG_INTEGER = 0x02,
-	ASN1_TAG_BIT_STRING = 0x03,
-	ASN1_TAG_OCTET_STRING = 0x04,
-	ASN1_TAG_NULL = 0x05,
-	ASN1_TAG_OBJECT_IDENTIFIER = 0x06,
-	ASN1_TAG_UTF8_STRING = 0x0c,
-	ASN1_TAG_RELATIVE_OID = 0x0d,
-	ASN1_TAG_SEQUENCE = 0x10,
-	ASN1_TAG_SET = 0x11,
-	ASN1_TAG_PRINTABLE_STRING = 0x13,
-	ASN1_TAG_VID_STRING = 0x15,
-	ASN1_TAG_IA5_STRING = 0x16,
-	ASN1_TAG_UTC = 0x17,
-	ASN1_TAG_GENERALIZED_TIME = 0x18,
-	ASN1_TAG_CONTEXT_SPECIFIC_0 = 0x80,
-	ASN1_TAG_CONTEXT_SPECIFIC_1 = 0x81,
-	ASN1_TAG_CONTEXT_SPECIFIC_2 = 0x82,
-	ASN1_TAG_CONTEXT_SPECIFIC_3 = 0x83,
-	ASN1_TAG_CONTEXT_SPECIFIC_4 = 0x84,
-	ASN1_TAG_CONTEXT_SPECIFIC_5 = 0x85,
-	ASN1_TAG_CONTEXT_SPECIFIC_6 = 0x86,
-	ASN1_TAG_CONTEXT_SPECIFIC_7 = 0x87,
-	ASN1_TAG_CONTEXT_SPECIFIC_8 = 0x88,
-	/* Add more tags here */
-	ASN1_TAG_UNKNOWN = 0xff
-};
-
-#define ASN1_INDEFINITE_FORM 0x80
-#define ASN1_INDEFINITE_LENGTH 0xffff
-
-#define ASN_BOOLEAN_TRUE 0xff
-#define ASN_BOOLEAN_FALSE 0x00
 
 #define MAX_STRING_LENGTH 256
 
@@ -713,13 +674,17 @@ int process_attributde_type_and_value(FILE *fp)
 	case ASN1_TAG_UTF8_STRING:
 		print_utf8_string(fp, length);
 		break;
+	case ASN1_TAG_T61_STRING:
+		/* Temporary */
+		print_printable_string(fp, length);
+		break;
 	case ASN1_TAG_IA5_STRING:
 		print_ia5_string(fp, length);
 		break;
 
+
 	default:
-		fprintf(stderr,
-			"Error: Not a supported AttributeTypeAndValue\n");
+		printf("Error: Not a supported AttributeTypeAndValue\n");
 		return 0;
 		break;
 	}

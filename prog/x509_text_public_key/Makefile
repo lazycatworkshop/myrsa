@@ -1,5 +1,5 @@
 CC = gcc
-INC_DIR = .
+INC_DIR = ../../include
 BIN_DIR = ../../bin
 CFLAGS = -Wall -I${INC_DIR} -MMD -MP -std=c99
 EXEC = x509_text_public_key
