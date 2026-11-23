@@ -1,0 +1,20 @@
+# Ignore all files in subdirectories that don't have an extension 
+# (Common way to target C executables while keeping .c and .h files)
+*/**
+!*/**/
+!*/**/*.*
+!**/Makefile
+
+# --- Build Artifacts ---
+# Matches any object files generated during compilation
+*.o
+
+# --- IDE & System Files ---
+.vscode/
+.idea/
+.DS_Store
+*.swp
+*.tmp
+
+# --- Debug Symbols (if any) ---
+*.dSYM/
