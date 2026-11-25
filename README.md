@@ -25,6 +25,21 @@ WORKDIR /workspace
 CMD ["/bin/sh"]
 ```
 
+An alternative one which generates a much bigger image:
+```console
+FROM gcc:16
+
+# The base gcc image already ships with gcc, make, and standard C build
+# tools/headers preinstalled
+RUN apt-get update && apt-get install -y \
+    vim-tiny \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /workspace
+CMD ["/bin/bash"]
+```
+
 
 ### Getting the code
 ```bash
